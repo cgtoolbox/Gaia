@@ -6,7 +6,7 @@
     <ProjectGuid>{88228509-48fa-4dfc-a2b3-0bcc8b9aa766}</ProjectGuid>
     <ProjectHome />
     <StartupFile>main.py</StartupFile>
-    <SearchPath>.</SearchPath>
+    <SearchPath>.;..\..\..\GaiaCollection\Pypanel\GaiaCollectionPy\</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
@@ -185,6 +185,13 @@
     <Content Include="icons\32\up.png" />
     <Content Include="icons\32\white_list.png" />
     <Content Include="icons\32\world.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\GaiaCollection\Pypanel\GaiaCollectionPy\GaiaCollectionPy.pyproj">
+      <Name>GaiaCollectionPy</Name>
+      <Project>{4e86272b-d7f7-4915-a768-48f7700015e9}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />

@@ -3,7 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "GaiaCollectionPy", "GaiaCollection\Pypanel\GaiaCollectionPy\GaiaCollectionPy.pyproj", "{4E86272B-D7F7-4915-A768-48F7700015E9}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "GaiaScatterPy", "GaiaScatter\pypanels\GaiaScatterPy\GaiaScatterPy.pyproj", "{88228509-48FA-4DFC-A2B3-0BCC8B9AA766}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E86272B-D7F7-4915-A768-48F7700015E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E86272B-D7F7-4915-A768-48F7700015E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88228509-48FA-4DFC-A2B3-0BCC8B9AA766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88228509-48FA-4DFC-A2B3-0BCC8B9AA766}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
