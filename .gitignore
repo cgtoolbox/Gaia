@@ -1,3 +1,13 @@
+# hip backup
+/hip/backup
+/hda/backup
+
+#visual studio
+*.suo
+
+# python compiled
+*.pyc
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
