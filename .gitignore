@@ -1,6 +1,6 @@
 # hip backup
-/hip/backup
-/hda/backup
+GaiaScatter/hip/backup
+GaiaScatter/hda/backup
 
 #visual studio
 *.suo
