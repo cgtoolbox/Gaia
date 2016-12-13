@@ -74,13 +74,6 @@
     <Folder Include="icons\32" />
     <Folder Include="ui" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\GaiaScatter\pypanels\GaiaScatterPy\GaiaScatterPy.pyproj">
-      <Name>GaiaScatterPy</Name>
-      <Project>{88228509-48fa-4dfc-a2b3-0bcc8b9aa766}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
 </Project>
