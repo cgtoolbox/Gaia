@@ -3,10 +3,10 @@ import random
 import hou
 import toolutils
 
-from core import cache
+from . import cache
 reload(cache)
 
-from core import nodeInfos
+from . import nodeInfos
 reload(nodeInfos)
 
 class PAINTMODES:

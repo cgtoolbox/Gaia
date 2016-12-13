@@ -7,133 +7,11 @@ from PySide import QtGui
 from PySide import QtCore
 import toolutils
 
-from icons.icon import get_icon
-from core import nodeInfos
-from ui import widgets
+from ..icons.icon import get_icon
+from ..core import nodeInfos
 
-class CreateNewEntryWidget(QtGui.QMainWindow):
-
-    def __init__(self, selected_node=None, parent=None):
-        super(CreateNewEntryWidget, self).__init__(parent=parent)
-        
-        self.setWindowTitle("Create new asset")
-        cw = QtGui.QWidget(self)
-        cw.setAutoFillBackground(True)
-        self.setObjectName("mw")
-        
-        self.setStyleSheet("""QWidget#mw{background-color: grey;}""")
-
-        self.selected_node = selected_node
-        main_layout = QtGui.QVBoxLayout()
-
-        # Init view
-        selected_node.setDisplayFlag(True)
-        self.nodes_state = [n for n in hou.node("/obj").children() \
-                            if n.isDisplayFlagSet() \
-                            and n != selected_node]
-        for n in self.nodes_state: n.setDisplayFlag(False)
-
-        self.selected_node.setCurrent(True)
-        self.selected_node.setSelected(True)
-
-        viewer = toolutils.sceneViewer()
-        viewport = viewer.curViewport()
-        viewport.frameSelected()
-
-        self.aspec = viewport.settings().viewAspectRatio()
-        self.viewer_p = nodeInfos.get_viewer_fullpath()
-
-        hou.hscript(("viewtransform " + self.viewer_p +
-                     " flag ( +a ) aspect ( 1.0 )"))
-
-        # thumbnail layout
-        thumbnail_lay = QtGui.QHBoxLayout()
-        thumbnail_lay.setSpacing(5)
-
-        self.thumbnail = QtGui.QLabel("")
-        self.thumbnail.setFixedWidth(90)
-        self.thumbnail.setFixedHeight(90)
-        self.thumbnail.setStyleSheet("""QLabel{border: 1px solid black}""")
-        self.thumbnail_pix = get_icon("close", 32).pixmap(1,1)
-        self.thumbnail.setPixmap(self.thumbnail_pix)
-        thumbnail_lay.addWidget(self.thumbnail)
-
-        thumbnail_opts_lay = QtGui.QVBoxLayout()
-        self.name = widgets.HStringValue(self.selected_node.name(),
-                                         "name:")
-        thumbnail_opts_lay.addWidget(self.name)
-
-        self.tags = widgets.HStringValue("",
-                                         "tags:")
-        thumbnail_opts_lay.addWidget(self.tags)
-
-        self.capture_btn = QtGui.QPushButton("Snapshot")
-        self.capture_btn.setIcon(get_icon("terrain"))
-        self.capture_btn.clicked.connect(self.create_thumbnail)
-        thumbnail_opts_lay.addWidget(self.capture_btn)
-        thumbnail_lay.addItem(thumbnail_opts_lay)
-
-        main_layout.addItem(thumbnail_lay)
-
-        self.validate_btn = QtGui.QPushButton("Valid")
-        self.validate_btn.setIcon(get_icon("checkmark"))
-        main_layout.addWidget(self.validate_btn)
-        
-        cw.setLayout(main_layout)
-        self.setCentralWidget(cw)
-
-        self.create_thumbnail()
-
-    def create_thumbnail(self):
-
-        binary_data = createThumbnailBase(self.selected_node)
-        self.thumbnail_pix.loadFromData(binary_data)
-        self.thumbnail.update()
-
-    def closeEvent(self, e):
-
-        hou.hscript(("viewtransform " + self.viewer_p + 
-                     " flag ( +a ) aspect ( " + 
-                     str(self.aspec) + " )"))
-
-        for n in self.nodes_state:
-            
-            try:
-                n.setDisplayFlag(True)
-            except hou.OperationFailed:
-                continue
-
-        super(CreateNewEntryWidget, self).closeEvent(e)
-
-class CollectionObjectWidget(QtGui.QWidget):
-    """ Widget displayed in the collection toolbox
-    """
-    def __init__(self, object_path="", parent=None):
-        super(CollectionObjectWidget, self).__init__(parent=parent)
-
-        self.main_layout = QtGui.QVBoxLayout()
-        self.main_layout.setSpacing(0)
-        self.main_layout.setContentsMargins(0,0,0,0)
-
-        with open("D:/test.jpg", 'rb') as f:
-            data = f.read()
-
-        img_data = QtCore.QByteArray()
-        img_data = img_data.fromRawData(data)
-
-        self.img = QtGui.QImage()
-        self.img.loadFromData(img_data)
-
-        self.pixmap = QtGui.QPixmap(self.img.scaled(90,90,
-                                                    QtCore.Qt.KeepAspectRatio))
-
-        self.label = QtGui.QLabel()
-        self.label.setPixmap(self.pixmap)
-        self.main_layout.addWidget(self.label)
-
-        self.setStyleSheet("""QWidget{border: 1px solid black}""")
-
-        self.setLayout(self.main_layout)
+from . import widgets
+reload(widgets)
 
 class CollectionInstanceWidget(QtGui.QWidget):
     """ Widget used in the layer widget, when object are dropped from the collection
@@ -146,6 +24,9 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.node = node
         self.path = self.node.evalParm("path_" + str(idx))
         self.influence = self.node.evalParm("influence_" + str(idx))
+        self.thumbnail_binary = None
+        with open("D:/test.jpg", 'rb') as f:
+            self.thumbnail_binary = f.read()
 
         # states
         self.displayed = True
@@ -184,7 +65,13 @@ class CollectionInstanceWidget(QtGui.QWidget):
         
         self.main_layout.addItem(self.btn_layout)
 
-        self.thumbnail = CollectionObjectWidget()
+        self.thumbnail = QtGui.QLabel()
+        self.thumbnail.setFixedWidth(90)
+        self.thumbnail.setFixedHeight(90)
+        self.pixmap = QtGui.QPixmap(90,90)
+        self.pixmap.loadFromData(self.thumbnail_binary)
+        self.thumbnail.setPixmap(self.pixmap)
+        self.thumbnail.setStyleSheet("""QLabel{border: 1px solid black}""")
         self.main_layout.addWidget(self.thumbnail)
 
         self.influence_base = InfluenceBarWidget(value = self.influence)
@@ -311,49 +198,3 @@ class InfluenceBarWidget(QtGui.QWidget):
         self._value = value
         self.slider.setValue(value)
         self.numeric_input.setValue(value)
-
-def createThumbnailBase(selected_obj, res=90, view_grid=False):
-    """Create a thumbnail image from current scene viewer and selected object(s)
-        return the binary data of the jpg file
-    """
-        
-    viewer = toolutils.sceneViewer()
-    viewport = viewer.curViewport()
-    if not viewer:
-        hou.ui.displayMessage("No scene viewer found.",
-                                severity=hou.severityType.Error)
-        return None
-    
-    cur_state = viewer.currentState()
-    viewer.enterViewState()
-        
-    construct_plane = viewer.constructionPlane()
-    construct_state = construct_plane.isVisible()
-    construct_plane.setIsVisible(view_grid)
-    
-    _desktop =  hou.ui.curDesktop()
-    desktop = _desktop.name()
-    _panetab =  _desktop.paneTabOfType(hou.paneTabType.SceneViewer)
-    panetab = _panetab.name()
-    persp = _panetab.curViewport().name()
-    camera_path = nodeInfos.get_viewer_fullpath()
-    
-    selected_obj.setCurrent(False)
-    
-    output = tempfile.gettempdir() + "\\" + selected_obj.name() + ".jpg"
-    cmd = 'viewwrite -f $F $F -c -q 4 -r ' + \
-          str(res) + ' ' + str(res) + ' ' + \
-          camera_path + ' "' + output + '"'
-    out, err = hou.hscript(cmd)
-    
-    if err:
-        print err
-    
-    # clean temporary camera and set options back to initial values
-    viewer.setCurrentState(cur_state)
-    construct_plane.setIsVisible(construct_state)
-    
-    selected_obj.setCurrent(True)
-
-    with open(output, 'rb') as f:
-        return f.read()

@@ -186,13 +186,6 @@
     <Content Include="icons\32\white_list.png" />
     <Content Include="icons\32\world.png" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\GaiaCollection\Pypanel\GaiaCollectionPy\GaiaCollectionPy.pyproj">
-      <Name>GaiaCollectionPy</Name>
-      <Project>{4e86272b-d7f7-4915-a768-48f7700015e9}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
 </Project>

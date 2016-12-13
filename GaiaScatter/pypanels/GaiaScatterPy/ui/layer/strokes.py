@@ -3,12 +3,14 @@ import hou
 from PySide import QtGui
 from PySide import QtCore
 
-from icons.icon import get_icon
-import ui.widgets as widgets
+from ...icons.icon import get_icon
+
+from ...ui import widgets
 reload(widgets)
 
-from core import paint
+from ...core import paint
 reload(paint)
+
 PAINTMODES = paint.PAINTMODES
 
 class StrokesWidget(QtGui.QWidget):

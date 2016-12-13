@@ -6,7 +6,7 @@ from functools import partial
 from PySide import QtGui
 from PySide import QtCore
 
-from icons.icon import get_icon
+from ..icons.icon import get_icon
 
 class HSlider(QtGui.QWidget):
     """ Custom widget which emulates the houdini float and int slider parameter.

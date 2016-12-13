@@ -7,16 +7,16 @@ from PySide import QtCore
 from . import strokes
 reload(strokes)
 
-from core import nodeInfos
+from ...core import nodeInfos
 reload(nodeInfos)
 
-from ui import widgets
+from ...ui import widgets
 reload(widgets)
 
-from ui import col_widgets
+from ...ui import col_widgets
 reload(col_widgets)
 
-from icons.icon import get_icon
+from ...icons.icon import get_icon
 
 
 class LayersWidget(QtGui.QWidget):

@@ -3,13 +3,13 @@ import hou
 from PySide import QtGui
 from PySide import QtCore
 
-from core import paint
+from ..core import paint
 reload(paint)
-from core.paint import PAINTMODES
+from ..core.paint import PAINTMODES
 
-from icons.icon import get_icon
+from ..icons.icon import get_icon
 
-from ui.layer import layer_widget
+from layer import layer_widget
 reload(layer_widget)
 
 class MainUI(QtGui.QWidget):
