@@ -8,7 +8,7 @@ from PySide import QtCore
 import toolutils
 
 from ..icons.icon import get_icon
-from ..core import nodeInfos
+from GaiaCommon import nodeInfos
 
 from . import widgets
 reload(widgets)

@@ -6,7 +6,7 @@ import toolutils
 from . import cache
 reload(cache)
 
-from . import nodeInfos
+from GaiaCommon import nodeInfos
 reload(nodeInfos)
 
 class PAINTMODES:

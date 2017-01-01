@@ -1,11 +1,13 @@
 {
+  "name":"platonic",
   "comment": "Test object a",
-  "folder": "misc",
-  "format": "bgeogz"
+  "category": "misc",
+  "format": "bgeo.gz"
   "geo_infos": {
     "npts": 50,
     "nprims": 25,
-    "bbox": [1.0, 1.0, 1.0, 2.0, 2.0, 2.0]
+    "bounds": [1.0, 1.0, 1.0, 2.0, 2.0, 2.0],
+	"center": [0,0,0]
   },
   "tags": [ "test", "red" ],
   "thumbnail": "aaaa"

@@ -1,6 +1,7 @@
 # hip backup
 GaiaScatter/hip/backup
 GaiaScatter/hda/backup
+GaiaCollection/backup
 
 #visual studio
 *.suo

@@ -7,7 +7,7 @@ from PySide import QtCore
 from . import strokes
 reload(strokes)
 
-from ...core import nodeInfos
+from GaiaCommon import nodeInfos
 reload(nodeInfos)
 
 from ...ui import widgets
@@ -18,6 +18,7 @@ reload(col_widgets)
 
 from ...icons.icon import get_icon
 
+from GaiaCollectionPy.ui.widgets import CreateNewEntryWidget
 
 class LayersWidget(QtGui.QWidget):
 
@@ -859,6 +860,6 @@ class InstancesListWidget(QtGui.QWidget):
         selected_node = hou.selectedNodes()
         if selected_node:
             selected_node = selected_node[0]
-            self.gaia_wac = col_widgets.CreateNewEntryWidget(selected_node,
+            self.gaia_wac = CreateNewEntryWidget(selected_node,
                                                  parent=hou.ui.mainQtWindow())
             self.gaia_wac.show()
