@@ -2,15 +2,22 @@ import os
 
 from PySide import QtGui
 
-def get_icon(name, size=32):
+def get_icon(name, file_type="svg", size=32):
     """ Return a given QIcon object according to a icon name
         and icon size. Return an empty QIcon if name not found.
     """
-    icons = os.path.dirname(__file__) + os.sep + str(size) + os.sep
-    icon = icons + name + ".png"
+    icon = None
+    if file_type == "png":
+        icons = os.path.dirname(__file__) + os.sep + str(size) + os.sep
+        icon = icons + name + ".png"
 
-    if not os.path.exists(icon):
-        print("Warning: icon {}:{}px not found.".format(name, size))
+    elif file_type == "svg":
+        icons = os.path.dirname(__file__) + "\\svg\\"
+        icon = icons + name + ".svg"
+        print icon
+
+    if not icon or not os.path.exists(icon):
+        print("Warning: icon {}:{}(px) not found.".format(name, size))
         return QtGui.QIcon()
 
     return QtGui.QIcon(icon)

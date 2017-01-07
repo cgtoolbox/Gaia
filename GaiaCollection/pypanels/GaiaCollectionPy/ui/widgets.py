@@ -36,6 +36,7 @@ class CollectionWidget(QtGui.QFrame):
         self.toolbar = CollectionToolbar(self)
         main_layout.addWidget(self.toolbar)
 
+        # middle layout
         middle_layout = QtGui.QHBoxLayout()
         middle_layout.setAlignment(QtCore.Qt.AlignLeft)
         middle_layout.setContentsMargins(0,0,0,0)
@@ -44,6 +45,14 @@ class CollectionWidget(QtGui.QFrame):
         self.collection_menu = CollectionMenu(self.collection_root, self)
         middle_layout.addWidget(self.collection_menu)
 
+        # asset grid
+        self.assets_grid = QtGui.QWidget()
+        self.assets_grid.setFixedWidth(450)
+        middle_layout.addWidget(self.assets_grid)
+
+        # asset property widget
+        self.asset_properties = QtGui.QWidget()
+        middle_layout.addWidget(self.asset_properties)
 
         main_layout.addItem(middle_layout)
 
@@ -57,8 +66,7 @@ class CollectionWidget(QtGui.QFrame):
 
             self.categories.append(f)
             p = self.collection_root + os.sep + f
-            hou.session.GAIA_COLLECTION_CATEGORIES_INDEX[f] = p
-        
+            hou.session.GAIA_COLLECTION_CATEGORIES_INDEX[f] = p      
 
 class CollectionToolbar(QtGui.QWidget):
     """ Top toolbar of the collection widget
@@ -98,59 +106,50 @@ class CollectionToolbar(QtGui.QWidget):
         self.w.setStyleSheet(hou.ui.qtStyleSheet())
         self.w.show()
 
-class CollectionMenu(QtGui.QWidget):
+class CollectionIconProvider(QtGui.QFileIconProvider):
+
+    def __init__(self):
+        super(CollectionIconProvider, self).__init__(self)
+   
+
+    def icon(self, info):
+
+        return get_icon("database")
+
+class CollectionMenu(QtGui.QTreeView):
     """ Left side menu to navigate throught the collection
     """
-    def __init__(self, root="", parent=None):
+    def __init__(self, collection_root="", parent=None):
         super(CollectionMenu, self).__init__(parent=parent)
 
-        self.root = root
-
-        self.setFixedWidth(105)
-        self.main_layout = QtGui.QVBoxLayout()
-        self.main_layout.setContentsMargins(5,0,0,0)
-        self.main_layout.setSpacing(1)
-
-        self.search = QtGui.QLineEdit()
-        self.search.setContentsMargins(0,0,0,5)
-        self.main_layout.addWidget(self.search)
+        #self.setHeaderLabel("Collection")
         
-        self.root_btn = CollectionMenuBtn("Root")
-        self.main_layout.addWidget(self.root_btn)
+        self.setStyleSheet( """QTreeView::branch {border-image: url(none.png);}
+                               QTreeView{outline: 0}
+                               QTreeView::item:selected{border: None;
+                                                        background-color: rgba(20,20,120,128);}
+                            """ );
 
-        self.go_up_btn = CollectionMenuBtn("...")
-        self.main_layout.addWidget(self.go_up_btn)
+        self.collection_dict = {}
+        self.collection_root = collection_root
 
-        self.setLayout(self.main_layout)
+        self.filemodel = QtGui.QFileSystemModel(self)
+        self.filemodel.setIconProvider(CollectionIconProvider())
+        
+        self.filemodel.setFilter(QtCore.QDir.AllDirs|QtCore.QDir.NoDotAndDotDot)
 
-        self.sub_menu = []
-        self.init_menu()
+        r = self.filemodel.setRootPath(collection_root)
+        self.filemodel.setHeaderData(0, QtCore.Qt.Horizontal, "Folders");
+        self.setModel(self.filemodel)
+        self.setRootIndex(r)
+        
+        for i in range(self.header().count()):
 
-    def init_menu(self):
+            if i == 0: continue
+            self.hideColumn(i)
 
-        for f in os.listdir(self.root):
-            if not os.path.isdir(self.root + os.sep + f):
-                continue
-
-            w = CollectionMenuBtn(f)
-            self.sub_menu.append(w)
-            self.main_layout.addWidget(w)
-
-class CollectionMenuBtn(QtGui.QPushButton):
-
-    def __init__(self, label, icon=""):
-        super(CollectionMenuBtn, self).__init__(label)
-
-        self.setFlat(True)
-        self.setContentsMargins(0,0,0,0)
-        self.setStyleSheet("""QPushButton{border: 1px solid black;
-                                          background-color: #2846b8}
-                              QPushButton:hover{border: 1px solid black;
-                                                background-color: #4e82e0}""")
-        self.setFixedWidth(100)
-        self.setFixedHeight(25)
-        if icon:
-            self.setIcon(get_icon(icon))
+        self.header().close()
+        
 
 class CreateNewEntryWidget(QtGui.QFrame):
 
