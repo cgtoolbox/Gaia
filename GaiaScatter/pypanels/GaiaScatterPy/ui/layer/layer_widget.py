@@ -7,6 +7,9 @@ from PySide import QtCore
 from . import strokes
 reload(strokes)
 
+from GaiaCollectionPy import ui as GC_ui
+reload(GC_ui)
+
 from GaiaCommon import nodeInfos
 reload(nodeInfos)
 
@@ -857,9 +860,7 @@ class InstancesListWidget(QtGui.QWidget):
 
     def add_item(self):
         
-        selected_node = hou.selectedNodes()
-        if selected_node:
-            selected_node = selected_node[0]
-            self.gaia_wac = CreateNewEntryWidget(selected_node,
-                                                 parent=hou.ui.mainQtWindow())
-            self.gaia_wac.show()
+        hou.session.GAIA_SCATTER_COLLECTION_W = GC_ui.widgets.CollectionWidget(from_gaia_scatter=True,
+                                                parent=None)
+        hou.session.GAIA_SCATTER_COLLECTION_W.setStyleSheet(hou.ui.qtStyleSheet())
+        hou.session.GAIA_SCATTER_COLLECTION_W.show()

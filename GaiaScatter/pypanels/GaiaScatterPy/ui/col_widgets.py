@@ -42,7 +42,7 @@ class CollectionInstanceWidget(QtGui.QWidget):
 
         self.show_toggle_btn = QtGui.QPushButton("")
         self.show_toggle_btn.setToolTip("Hide / Show object")
-        self.show_toggle_btn.setIcon(get_icon("eye_open", 24))
+        self.show_toggle_btn.setIcon(get_icon("eye_open"))
         self.show_toggle_btn.setFixedWidth(22)
         self.show_toggle_btn.setFixedHeight(22)
         self.show_toggle_btn.setFlat(True)
@@ -50,14 +50,14 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.btn_layout.addWidget(self.show_toggle_btn)
 
         self.display_mode_btn = QtGui.QPushButton("")
-        self.display_mode_btn.setIcon(get_icon("tree", 24))
+        self.display_mode_btn.setIcon(get_icon("tree"))
         self.display_mode_btn.setFixedWidth(22)
         self.display_mode_btn.setFixedHeight(22)
         self.display_mode_btn.setFlat(True)
         self.btn_layout.addWidget(self.display_mode_btn)
 
         self.delete_btn = QtGui.QPushButton("")
-        self.delete_btn.setIcon(get_icon("close", 24))
+        self.delete_btn.setIcon(get_icon("close"))
         self.delete_btn.setFixedWidth(22)
         self.delete_btn.setFixedHeight(22)
         self.delete_btn.setFlat(True)

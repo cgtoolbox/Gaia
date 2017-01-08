@@ -443,9 +443,9 @@ class CollapsableWidget(QtGui.QWidget):
                            border-radius: 3px}
         """)
         if collapsed:
-            self.collapse_btn.setIcon(get_icon("collapse_up", 24))
+            self.collapse_btn.setIcon(get_icon("collapse_up"))
         else:
-            self.collapse_btn.setIcon(get_icon("collapse_down", 24))
+            self.collapse_btn.setIcon(get_icon("collapse_down"))
         main_layout.addWidget(self.collapse_btn)
 
         self.widget = widget
@@ -462,11 +462,11 @@ class CollapsableWidget(QtGui.QWidget):
         if self.collapsed:
             self.widget.setVisible(True)
             self.collapsed = False
-            self.collapse_btn.setIcon(get_icon("collapse_down", 24))
+            self.collapse_btn.setIcon(get_icon("collapse_down"))
         else:
             self.widget.setVisible(False)
             self.collapsed = True
-            self.collapse_btn.setIcon(get_icon("collapse_up", 24))
+            self.collapse_btn.setIcon(get_icon("collapse_up"))
 
 class PickLayerTypeWidget(QtGui.QDialog):
 

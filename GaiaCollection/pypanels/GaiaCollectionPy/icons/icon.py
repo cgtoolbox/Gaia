@@ -14,7 +14,6 @@ def get_icon(name, file_type="svg", size=32):
     elif file_type == "svg":
         icons = os.path.dirname(__file__) + "\\svg\\"
         icon = icons + name + ".svg"
-        print icon
 
     if not icon or not os.path.exists(icon):
         print("Warning: icon {}:{}(px) not found.".format(name, size))

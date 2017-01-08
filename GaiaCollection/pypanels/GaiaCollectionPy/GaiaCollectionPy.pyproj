@@ -26,6 +26,9 @@
     <Compile Include="icons\icon.py" />
     <Compile Include="icons\__init__.py" />
     <Compile Include="main.py" />
+    <Compile Include="ui\ui_workers.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ui\widgets.py" />
     <Compile Include="ui\__init__.py" />
     <Compile Include="__init__.py" />
@@ -66,12 +69,34 @@
     <Content Include="icons\32\terrain.png" />
     <Content Include="icons\32\trash_can.png" />
     <Content Include="icons\32\white_list.png" />
+    <Content Include="icons\svg\add.svg" />
+    <Content Include="icons\svg\camera_view.svg" />
+    <Content Include="icons\svg\checkmark.svg" />
+    <Content Include="icons\svg\clean.svg" />
+    <Content Include="icons\svg\close.svg" />
+    <Content Include="icons\svg\database.svg" />
+    <Content Include="icons\svg\edit.svg" />
+    <Content Include="icons\svg\export_database.svg" />
+    <Content Include="icons\svg\field.svg" />
+    <Content Include="icons\svg\file.svg" />
+    <Content Include="icons\svg\folder2.svg" />
+    <Content Include="icons\svg\folder_open.svg" />
+    <Content Include="icons\svg\help.svg" />
+    <Content Include="icons\svg\hourglass.svg" />
+    <Content Include="icons\svg\import_database.svg" />
+    <Content Include="icons\svg\info.svg" />
+    <Content Include="icons\svg\lock.svg" />
+    <Content Include="icons\svg\populate_database.svg" />
+    <Content Include="icons\svg\terrain.svg" />
+    <Content Include="icons\svg\trash_can.svg" />
+    <Content Include="icons\svg\white_list.svg" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="core" />
     <Folder Include="icons" />
     <Folder Include="icons\24" />
     <Folder Include="icons\32" />
+    <Folder Include="icons\svg\" />
     <Folder Include="ui" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
