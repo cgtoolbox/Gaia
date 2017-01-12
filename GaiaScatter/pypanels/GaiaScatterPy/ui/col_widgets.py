@@ -82,10 +82,16 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.thumbnail.setStyleSheet("""QLabel{border: 1px solid black}""")
         self.main_layout.addWidget(self.thumbnail)
 
-        self.influence_base = InfluenceBarWidget(value = self.influence)
+        self.influence_base = InfluenceBarWidget(value=self.influence,
+                                                 idx=self.idx,
+                                                 callback=self.change_influence)
         self.main_layout.addWidget(self.influence_base)
 
         self.setLayout(self.main_layout)
+
+    def change_influence(self, value):
+
+        self.node.parm("influence_" + str(self.idx)).set(value)
 
     def show_object(self):
 
@@ -170,7 +176,7 @@ class InfluenceBarWidget(QtGui.QWidget):
         self.numeric_input.setValue(self._value)
 
         if self.callback:
-            self.callback(self.idx, self._value)
+            self.callback(self._value)
 
     def _numeric_input_stylesheet(self):
         

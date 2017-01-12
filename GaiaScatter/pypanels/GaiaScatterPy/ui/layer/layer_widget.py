@@ -32,7 +32,7 @@ class LayersWidget(QtGui.QWidget):
         main_layout = QtGui.QVBoxLayout()
 
         self.top_asset = top_asset
-        self.instance_node = hou.node(self.top_asset.path() + "/INSTANCES")
+        self.instance_node = hou.node(self.top_asset.path() + "/PACKED_COPIES")
 
         # layer infos used to fetch gaia layer node
         self.scatter_infos = nodeInfos.GaiaScatterInfos()
