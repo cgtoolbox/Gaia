@@ -436,11 +436,9 @@ class CollapsableWidget(QtGui.QWidget):
 
         self.collapse_btn.setStyleSheet("""
         QPushButton{background-color:""" + color + """;
-                    border: 0px;
-                    border-radius: 3px}
+                    border: 0px;}
         QPushButton:hover{background-color:""" + color_hoover + """;
-                           border: 0px;
-                           border-radius: 3px}
+                           border: 0px;}
         """)
         if collapsed:
             self.collapse_btn.setIcon(get_icon("collapse_up"))

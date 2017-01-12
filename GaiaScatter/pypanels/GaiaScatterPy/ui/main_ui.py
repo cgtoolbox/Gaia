@@ -5,6 +5,8 @@ from PySide import QtCore
 
 from ..core import paint
 reload(paint)
+from ..core import cache
+reload(cache)
 from ..core.paint import PAINTMODES
 
 from ..icons.icon import get_icon
@@ -72,7 +74,8 @@ class MainUI(QtGui.QWidget):
         self.setLayout(self.main_layout)
 
     def update_layer_widget(self):
-
+        """ Create or update default layer widget
+        """
         top_asset = hou.node(self.gaia_node_path.text())
         self.layers_w = layer_widget.LayersWidget(top_asset, parent=self)
         self.main_layout.addWidget(self.layers_w)
@@ -94,6 +97,9 @@ class MainUI(QtGui.QWidget):
         hou.ui.selectFromList
         if not r: return
 
+        cache.set("CURRENT_GAIA_SCATTER", paths[r[0]])
+        self.init_collection_node(paths[r[0]])
+
         self.gaia_node_path.setText(paths[r[0]])
         self.gaia_asset_lbl.setVisible(True)
         self.gaia_node_path.setVisible(True)
@@ -103,5 +109,16 @@ class MainUI(QtGui.QWidget):
         self.open_scatter_btn.setVisible(False)
         self.update_layer_widget()
 
+    def init_collection_node(self, gaia_scatter):
+        """ Create the obj/collection subnet where the scatter assets
+            will be stored.
+        """
+
+        col_name = gaia_scatter.split('/')[-1]
+        if not hou.node("/obj/" + col_name + "_collection"):
+            n = hou.node("/obj").createNode("subnet", col_name + "_collection")
+            gpos = hou.node(gaia_scatter).position()
+            n.setPosition([gpos.x() + 3.0, gpos.y()])
+            n.setComment("Collection assets for Gaia Scatter node: " + gaia_scatter)
 
         

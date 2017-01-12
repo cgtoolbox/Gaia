@@ -17,28 +17,35 @@ class CollectionInstanceWidget(QtGui.QWidget):
     """ Widget used in the layer widget, when object are dropped from the collection
         to the scatter tool.
     """
-    def __init__(self, node=None, idx=0, parent=None):
+    def __init__(self, node=None, idx=0, thumbnail_binary=None,
+                 asset_path="", tooltip="",
+                 parent=None):
         super(CollectionInstanceWidget, self).__init__(parent=parent)
 
+        self.setToolTip(unicode(tooltip))
+        self.setAcceptDrops(True)
+        self.top_w = parent
         self.idx = idx
         self.node = node
-        self.path = self.node.evalParm("path_" + str(idx))
+        self.node.parm("instances").set(idx)
+        self.asset_path = asset_path
+        self.node.parm("path_" + str(idx)).set(asset_path)
         self.influence = self.node.evalParm("influence_" + str(idx))
-        self.thumbnail_binary = None
-        with open("D:/test.jpg", 'rb') as f:
-            self.thumbnail_binary = f.read()
+        self.thumbnail_binary = thumbnail_binary
 
         # states
         self.displayed = True
         self.display_mode = 0
 
         self.main_layout = QtGui.QVBoxLayout()
+        self.main_layout.setAlignment(QtCore.Qt.AlignTop)
         self.main_layout.setContentsMargins(0,0,0,0)
         self.main_layout.setSpacing(0)
 
         self.btn_layout = QtGui.QHBoxLayout()
         self.btn_layout.setContentsMargins(0,0,0,0)
-        self.btn_layout.setSpacing(1)
+        self.btn_layout.setSpacing(10)
+        self.btn_layout.setAlignment(QtCore.Qt.AlignLeft)
 
         self.show_toggle_btn = QtGui.QPushButton("")
         self.show_toggle_btn.setToolTip("Hide / Show object")
@@ -68,8 +75,9 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.thumbnail = QtGui.QLabel()
         self.thumbnail.setFixedWidth(90)
         self.thumbnail.setFixedHeight(90)
-        self.pixmap = QtGui.QPixmap(90,90)
+        self.pixmap = QtGui.QPixmap()
         self.pixmap.loadFromData(self.thumbnail_binary)
+        self.pixmap = self.pixmap.scaledToHeight(90, QtCore.Qt.TransformationMode.SmoothTransformation)
         self.thumbnail.setPixmap(self.pixmap)
         self.thumbnail.setStyleSheet("""QLabel{border: 1px solid black}""")
         self.main_layout.addWidget(self.thumbnail)
@@ -82,6 +90,23 @@ class CollectionInstanceWidget(QtGui.QWidget):
     def show_object(self):
 
         pass
+
+    def dragEnterEvent(self, event):
+
+        return
+
+    def dragMoveEvent(self, event):
+        
+        return
+
+    def dropEvent(self, event):
+        
+        try:
+            data = event.mimeData().text()
+            data = eval(data)
+            self.top_w.append_item(data)
+        except SyntaxError:
+            print("Error: bad formating metadata")
 
 class InfluenceBarWidget(QtGui.QWidget):
     """ Special custom slider used in the collection thumbnail widget

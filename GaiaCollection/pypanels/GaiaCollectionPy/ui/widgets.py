@@ -137,6 +137,7 @@ class CollectionGrid(QtGui.QFrame):
         self.collection_items = []
         self.selected_item = None
         self.item_properties = parent.asset_properties
+        self.collection_root = collection_root
 
         # worker thread used by item parsing
         self.worker = QtCore.QThread()
@@ -205,7 +206,8 @@ class CollectionGrid(QtGui.QFrame):
     @QtCore.Slot(dict)
     def add_entry(self, metadata):
         
-        w = CollectionItem(metadata=metadata, parent=self)
+        w = CollectionItem(metadata=metadata, collection_root=self.collection_root,
+                           parent=self)
         nitems = len(self.collection_items)
 
         col = 0
@@ -286,11 +288,11 @@ class CollectionItemProperties(QtGui.QWidget):
         self.item_path = ""
         self.collection_root = collection_root
         self.metadata = None
+        self.setProperty("houdiniStyle", True)
 
         main_layout = QtGui.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         main_layout.setSpacing(5)
-        self.setProperty("houdiniStyle", True)
 
         main_layout.addWidget(QtGui.QLabel("Properties:"))
         main_layout.addWidget(h_widgets.HSeparator())
@@ -329,12 +331,13 @@ class CollectionItemProperties(QtGui.QWidget):
         self.tags_w = QtGui.QLabel("Tags: -")
         main_layout.addWidget(self.tags_w)
 
-        self.edit_tags_btn = QtGui.QPushButton("Edit Properties")
-        self.edit_tags_btn.setEnabled(False)
-        main_layout.addWidget(self.edit_tags_btn)
-
+        self.edit_tags_btn = None
         self.import_3d_btn = None
         if not FROM_GAIA_SCATTER:
+
+            self.edit_tags_btn = QtGui.QPushButton("Edit Properties")
+            self.edit_tags_btn.setEnabled(False)
+            main_layout.addWidget(self.edit_tags_btn)
 
             main_layout.addWidget(h_widgets.HSeparator())
 
@@ -374,7 +377,8 @@ class CollectionItemProperties(QtGui.QWidget):
             self.item_type.setText("Type: " + _type)
 
             self.check_geo_btn.setEnabled(True)
-            self.edit_tags_btn.setEnabled(True)
+            if self.edit_tags_btn:
+                self.edit_tags_btn.setEnabled(True)
             if self.import_3d_btn:
                 self.import_3d_btn.setEnabled(True)
 
@@ -400,7 +404,8 @@ class CollectionItemProperties(QtGui.QWidget):
         self.metadata = None
 
         self.check_geo_btn.setEnabled(False)
-        self.edit_tags_btn.setEnabled(False)
+        if self.edit_tags_btn:
+            self.edit_tags_btn.setEnabled(False)
         if self.import_3d_btn:
             self.import_3d_btn.setEnabled(False)
 
@@ -427,7 +432,7 @@ class CollectionItemProperties(QtGui.QWidget):
 
 class CollectionItem(QtGui.QLabel):
 
-    def __init__(self, metadata=None, parent=None):
+    def __init__(self, metadata=None, collection_root="", parent=None):
         super(CollectionItem, self).__init__(parent=parent)
 
         global FROM_GAIA_SCATTER
@@ -436,6 +441,7 @@ class CollectionItem(QtGui.QLabel):
         self.is_selected = False
         self.metadata = metadata
         self.collection_grid = parent
+        self.metadata["collection_root"] = collection_root
         self.setMouseTracking(True)
 
         self.setFixedSize(QtCore.QSize(85, 85))

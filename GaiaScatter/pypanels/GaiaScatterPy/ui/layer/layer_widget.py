@@ -1,5 +1,6 @@
 import os
 import hou
+import base64
 
 from PySide import QtGui
 from PySide import QtCore
@@ -194,21 +195,6 @@ class LayerTabWidget(QtGui.QWidget):
 
     def __init__(self, layer_infos=None, tabs_widget=None, parent=None):
         super(LayerTabWidget, self).__init__(parent=parent)
-
-        ############################################################
-        # PLACEHOLDER CODE SET DEFAULT INSTANCE MODELS TO A, B, C
-        n = layer_infos.node
-        n.parm("instances").set(3)
-
-        n.parm("influence_1").set(45)
-        n.parm("path_1").set("/obj/object_A")
-
-        n.parm("influence_2").set(20)
-        n.parm("path_2").set("/obj/object_B")
-
-        n.parm("influence_3").set(35)
-        n.parm("path_3").set("/obj/object_C")
-        #############################################################
 
         self.setObjectName("layer")
         self.layer_infos = layer_infos
@@ -834,24 +820,12 @@ class InstancesListWidget(QtGui.QWidget):
         main_layout.addWidget(self.add_btn)
 
         # list layout
-        self.influence_widgets = []
-        self.list_layout = QtGui.QHBoxLayout()
-        self.list_layout.setSpacing(10)
-
-        self.list_widget = QtGui.QWidget()
-        self.list_widget.setSizePolicy(QtGui.QSizePolicy.Maximum,
-                                   QtGui.QSizePolicy.Maximum)
-
         self.node = layer_infos.node
-        instances = self.node.parm("instances").eval()
-        for i in range(instances):
-
-            i += 1
-            w = col_widgets.CollectionInstanceWidget(self.node, i, self)
-            self.influence_widgets.append(w)
-            self.list_layout.addWidget(w)
+        self.list_widget = InstanceItemsContainer(node=self.node,
+                                                  parent=self)
         
-        self.list_widget.setLayout(self.list_layout)
+        instances = self.node.parm("instances").eval()
+        # TODO: read ho many instances are already set on the node and add them to UI
 
         main_layout.addWidget(self.list_widget)
 
@@ -864,3 +838,94 @@ class InstancesListWidget(QtGui.QWidget):
                                                 parent=None)
         hou.session.GAIA_SCATTER_COLLECTION_W.setStyleSheet(hou.ui.qtStyleSheet())
         hou.session.GAIA_SCATTER_COLLECTION_W.show()
+
+    def append_item(self, metadata):
+
+        self.list_widget.append_item(metadata)
+
+class InstanceItemsContainer(QtGui.QFrame):
+
+    def __init__(self, node=None, parent=None):
+        super(InstanceItemsContainer, self).__init__(parent=parent)
+
+        self.influence_widgets = []
+        self.influence_names = []
+        self.node = node
+
+        self.top_w = parent
+        self.setAcceptDrops(True)
+        self.setMinimumHeight(85)
+        self.setSizePolicy(QtGui.QSizePolicy.Minimum,
+                           QtGui.QSizePolicy.Minimum)
+
+        main_layout = QtGui.QVBoxLayout()
+        main_layout.setAlignment(QtCore.Qt.AlignTop)
+        self.nitems_lbl = QtGui.QLabel("0 Item(s)")
+        main_layout.addWidget(self.nitems_lbl)
+
+        self.scroll_w = QtGui.QWidget()
+        self.grid_layout = QtGui.QGridLayout()
+        self.scroll_w.setLayout(self.grid_layout)
+        self.scroll_area = QtGui.QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setWidget(self.scroll_w)
+
+        main_layout.addWidget(self.scroll_area)
+        self.setLayout(main_layout)
+
+    def append_item(self, metadata):
+
+        _name = metadata["name"]
+        if _name in self.influence_names:
+            hou.ui.displayMessage("Asset: {} already used in this layer".format(_name))
+            return
+        nitems = len(self.influence_widgets)
+        
+        comment = metadata["comment"]
+        category = metadata["category"]
+        format = metadata["format"]
+        _path = metadata["path"].replace('\\', '/')
+        _path = _path.replace("%ROOT%", metadata["collection_root"])
+        _path = _path.replace('\\', '/') + '/'
+        _path += _name + '.' + format
+
+        thumbnail_binary = base64.decodestring(metadata["thumbnail"])
+        tooltip = ("Asset name: {}\n"
+                   "Category: {}\n"
+                   "Format: {}\n"
+                   "Path: {}\n"
+                   "Comment: {}".format(_name, category, format, _path, comment))
+        w = col_widgets.CollectionInstanceWidget(node=self.node, idx=nitems + 1,
+                                                 thumbnail_binary=thumbnail_binary,
+                                                 tooltip=tooltip, asset_path=_path,
+                                                 parent=self)
+        
+        col = 0
+        row = 0
+        if nitems > 0: 
+            
+            col = nitems % 4
+            row = nitems / 4
+
+        self.grid_layout.addWidget(w, row, col)
+        self.influence_widgets.append(w)
+        self.influence_names.append(_name)
+        self.grid_layout.update()
+        self.nitems_lbl.setText("{} Item(s)".format(nitems + 1))
+
+    def dragEnterEvent(self, event):
+
+        return
+
+    def dragMoveEvent(self, event):
+        
+        return
+
+    def dropEvent(self, event):
+        
+        try:
+            data = event.mimeData().text()
+            data = eval(data)
+            self.top_w.append_item(data)
+        except SyntaxError:
+            print("Error: bad formating metadata")
