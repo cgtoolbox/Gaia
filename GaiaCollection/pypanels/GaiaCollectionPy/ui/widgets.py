@@ -34,7 +34,7 @@ class CollectionWidget(QtGui.QFrame):
 
         self.collection_root = r"D:\WORK_3D\Gaia\GaiaCollection\collections"
         hou.session.GAIA_COLLECTION_ROOT = self.collection_root
-        hou.session.GAIA_COLLECTION_CATEGORIES_INDEX = {}
+        
         self.categories = []
         self.init_collection_folders()
 
@@ -67,14 +67,13 @@ class CollectionWidget(QtGui.QFrame):
         self.setLayout(main_layout)
 
     def init_collection_folders(self):
-
+        
         for f in os.listdir(self.collection_root):
             if not os.path.isdir(self.collection_root + os.sep + f):
                 continue
 
             self.categories.append(f)
-            p = self.collection_root + os.sep + f
-            hou.session.GAIA_COLLECTION_CATEGORIES_INDEX[f] = p      
+            p = self.collection_root + os.sep + f  
 
 class CollectionToolbar(QtGui.QWidget):
     """ Top toolbar of the collection widget
@@ -85,6 +84,7 @@ class CollectionToolbar(QtGui.QWidget):
         layout = QtGui.QHBoxLayout()
         layout.setAlignment(QtCore.Qt.AlignLeft)
         self.assets_grid = parent.assets_grid
+        self.collection_menu = parent.collection_menu
 
         self.add_asset_btn = QtGui.QPushButton("")
         self.add_asset_btn.setFixedHeight(32)
@@ -105,8 +105,15 @@ class CollectionToolbar(QtGui.QWidget):
                                   severity=hou.severityType.Error)
             return
 
+        current_category = self.collection_menu.current_category
+        if not current_category:
+            hou.ui.displayMessage("No category selected",
+                                  severity=hou.severityType.Error)
+            return
+
         selected_node = selected_node[0]
         child_geo = [n.geometry() for n in selected_node.children() if \
+                     hasattr(n, "isDisplayFlagSet") and \
                      n.isDisplayFlagSet()][0]
         if not child_geo.prims():
             hou.ui.displayMessage("Invalid node: no geometry found",
@@ -115,6 +122,7 @@ class CollectionToolbar(QtGui.QWidget):
 
         self.w = CreateNewEntryWidget(selected_node=selected_node,
                                       assets_grid=self.assets_grid,
+                                      current_category=current_category,
                                       parent=None)
         self.w.setStyleSheet(hou.ui.qtStyleSheet())
         self.w.show()
@@ -252,7 +260,7 @@ class CollectionMenu(QtGui.QTreeView):
                                                         background-color: rgba(20,20,120,128);}
                             """ );
 
-        self.collection_dict = {}
+        self.current_category = None
         self.collection_root = collection_root
 
         self.filemodel = QtGui.QFileSystemModel(self)
@@ -275,6 +283,7 @@ class CollectionMenu(QtGui.QTreeView):
     def selectionChanged(self, selected, deselected):
         
         items_path_root = self.filemodel.filePath(self.currentIndex())
+        self.current_category = items_path_root.replace(os.sep, '/').replace(self.collection_root.replace(os.sep, '/'), '')
         self.collection.assets_grid.display_items(items_path_root)
         super(CollectionMenu, self).selectionChanged(selected, deselected)
         
@@ -487,6 +496,7 @@ class CollectionItem(QtGui.QLabel):
 class CreateNewEntryWidget(QtGui.QFrame):
 
     def __init__(self, selected_node=None, create_light=True, assets_grid=None,
+                 current_category=None,
                  parent=None):
         super(CreateNewEntryWidget, self).__init__(parent,
                                                    QtCore.Qt.WindowStaysOnTopHint)
@@ -496,6 +506,7 @@ class CreateNewEntryWidget(QtGui.QFrame):
         self.setAutoFillBackground(True)
         
         self.assets_grid = assets_grid
+        self.current_category = current_category
 
         self.selected_node = selected_node
         self.nprims = -1
@@ -600,17 +611,9 @@ class CreateNewEntryWidget(QtGui.QFrame):
         self.tags = h_widgets.HStringValue("",
                                          "tags:")
         thumbnail_opts_lay.addWidget(self.tags)
-
-        category_lay = QtGui.QHBoxLayout()
-        category_lay.setSpacing(5)
-        category_lay.setAlignment(QtCore.Qt.AlignLeft)
-        category_lay.addWidget(QtGui.QLabel("Category:"))
         
-        self.category = QtGui.QComboBox()
-        self.category.addItems(hou.session.GAIA_COLLECTION_CATEGORIES_INDEX.keys())
-        category_lay.addWidget(self.category)
-
-        thumbnail_opts_lay.addLayout(category_lay)
+        self.category = QtGui.QLabel("Category: " + self.current_category)
+        thumbnail_opts_lay.addWidget(self.category)
 
         format_lay = QtGui.QHBoxLayout()
         format_lay.setSpacing(5)
@@ -741,9 +744,8 @@ class CreateNewEntryWidget(QtGui.QFrame):
 
         metadata["creation_time"] = str(datetime.datetime.now())
         metadata["created_by"] = getpass.getuser()
-
-        category = self.category.currentText()
-        metadata["category"] = category
+        
+        metadata["category"] = self.current_category
 
         obj_type = self.obj_type.currentText()
         metadata["type"] = obj_type
@@ -767,8 +769,8 @@ class CreateNewEntryWidget(QtGui.QFrame):
         geo_infos["center"] = self.obj_center
         metadata["geo_infos"] = geo_infos
 
-        _path = hou.session.GAIA_COLLECTION_CATEGORIES_INDEX[category]
-        metadata["path"] = _path.replace(hou.session.GAIA_COLLECTION_ROOT, "%ROOT%")
+        _path = hou.session.GAIA_COLLECTION_ROOT + self.current_category
+        metadata["path"] = "%ROOT%" + self.current_category
 
         metadata["thumbnail"] = base64.b64encode(self.thumbnail_data)
 

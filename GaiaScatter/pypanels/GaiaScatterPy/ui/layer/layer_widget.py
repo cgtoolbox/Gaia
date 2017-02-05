@@ -807,15 +807,12 @@ class InstancesListWidget(QtGui.QWidget):
 
         self.gaia_wac = None
 
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtGui.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
         main_layout.setSpacing(5)
 
         self.add_btn = QtGui.QPushButton("")
-        self.add_btn.setFixedWidth(30)
         self.add_btn.setIcon(get_icon("add"))
-        self.add_btn.setSizePolicy(QtGui.QSizePolicy.Maximum,
-                                   QtGui.QSizePolicy.Minimum)
         self.add_btn.clicked.connect(self.add_item)
         main_layout.addWidget(self.add_btn)
 
