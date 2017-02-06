@@ -890,6 +890,33 @@ class InstanceItemsContainer(QtGui.QFrame):
         _path = _path.replace('\\', '/') + '/'
         _path += _name + '.' + format
 
+        # append item to collection subnet
+        collection_sub = cache.get("CURRENT_GAIA_SCATTER_COLLECTION")
+        col_item = collection_sub.node(_name + '_' + uid)
+        if not col_item:
+            col_item = collection_sub.createNode("geo", _name + '_' + uid)
+            col_item.setComment("Collection item, file: " + _path)
+            _file = col_item.node("file1")
+            _file.setName("import_file")
+            _file.parm("file").set(_path)
+            _file.parm("loadtype").set(4)
+            _file.parm("viewportlod").set(0)
+            output = col_item.createNode("output", "OUT_" + _name)
+
+            null = col_item.createNode("null", "NONE")  # used to hide the object
+
+            switch = col_item.createNode("switch", "show_object")
+            switch.setInput(0, null)
+            switch.setInput(1, _file)
+            switch.parm("input").set(1)
+
+            output.setInput(0, switch)
+            output.setDisplayFlag(True)
+            output.setRenderFlag(True)
+            col_item.layoutChildren()
+
+        collection_sub.layoutChildren()
+
         thumbnail_binary = base64.decodestring(metadata["thumbnail"])
         tooltip = ("Asset name: {}\n"
                    "Category: {}\n"
@@ -898,8 +925,8 @@ class InstanceItemsContainer(QtGui.QFrame):
                    "Comment: {}".format(_name, category, format, _path, comment))
         w = col_widgets.CollectionInstanceWidget(node=self.node, idx=nitems + 1,
                                                  thumbnail_binary=thumbnail_binary,
-                                                 tooltip=tooltip, asset_path=_path,
-                                                 parent=self)
+                                                 tooltip=tooltip, asset_path=col_item.path(),
+                                                 _name=_name, parent=self)
         
         col = 0
         row = 0
@@ -914,24 +941,26 @@ class InstanceItemsContainer(QtGui.QFrame):
         self.grid_layout.update()
         self.nitems_lbl.setText("{} Item(s)".format(nitems + 1))
 
-        # append item to collection subnet
-        collection_sub = cache.get("CURRENT_GAIA_SCATTER_COLLECTION")
-        col_item = collection_sub.node(_name + '_' + uid)
-        if not col_item:
-            col_item = collection_sub.createNode("geo", _name + '_' + uid)
-            col_item.setComment("Collection item, file: " + _path)
-            _file = col_item.node("file1")
-            _file.setName("import_file")
-            _file.parm("file").set(_path)
-            _file.parm("loadtype").set(4)
-            _file.parm("viewportlod").set(0)
-            output = col_item.createNode("output", "OUT_" + _name)
-            output.setInput(0, _file)
-            output.setDisplayFlag(True)
-            output.setRenderFlag(True)
-            col_item.layoutChildren()
+    def remove_item(self, w):
+        """ Remove item from the grid, called from items
+        """
 
-        collection_sub.layoutChildren()
+        if w._name in self.influence_names:
+            self.influence_names.pop(self.influence_names.index(w._name))
+
+        if w in self.influence_widgets:
+            self.influence_widgets.pop(self.influence_widgets.index(w))
+
+        self.grid_layout.removeWidget(w)
+        w.setParent(None)
+        w.deleteLater()
+
+        # update idx
+        for i, w in enumerate(self.influence_widgets):
+            w.idx = i + 1
+
+        self.grid_layout.update()
+
 
     def dragEnterEvent(self, event):
 

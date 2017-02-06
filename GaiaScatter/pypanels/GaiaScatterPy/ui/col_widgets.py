@@ -18,13 +18,14 @@ class CollectionInstanceWidget(QtGui.QWidget):
         to the scatter tool.
     """
     def __init__(self, node=None, idx=0, thumbnail_binary=None,
-                 asset_path="", tooltip="",
+                 asset_path="", tooltip="", _name="",
                  parent=None):
         super(CollectionInstanceWidget, self).__init__(parent=parent)
 
         self.setToolTip(unicode(tooltip))
         self.setAcceptDrops(True)
         self.top_w = parent
+        self._name = _name
         self.idx = idx
         self.node = node
         self.node.parm("instances").set(idx)
@@ -61,13 +62,27 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.display_mode_btn.setFixedWidth(22)
         self.display_mode_btn.setFixedHeight(22)
         self.display_mode_btn.setFlat(True)
+        self.display_mode_btn.clicked.connect(self.change_display_mode)
         self.btn_layout.addWidget(self.display_mode_btn)
+
+        self.displayModeMenu = QtGui.QMenu(self)
+
+        full_geo = QtGui.QAction(get_icon("tree"), " Full Geometry", self)
+        full_geo.triggered.connect(lambda: self.set_display_mode(0))
+        self.displayModeMenu.addAction(full_geo)
+        boudning_box = QtGui.QAction(get_icon("cube"), " Bounding Box", self)
+        boudning_box.triggered.connect(lambda: self.set_display_mode(2))
+        self.displayModeMenu.addAction(boudning_box)
+        pt_cloud = QtGui.QAction(get_icon("diffusion"), " Points Coud", self)
+        pt_cloud.triggered.connect(lambda: self.set_display_mode(1))
+        self.displayModeMenu.addAction(pt_cloud)
 
         self.delete_btn = QtGui.QPushButton("")
         self.delete_btn.setIcon(get_icon("close"))
         self.delete_btn.setFixedWidth(22)
         self.delete_btn.setFixedHeight(22)
         self.delete_btn.setFlat(True)
+        self.delete_btn.clicked.connect(self.remove_item)
         self.btn_layout.addWidget(self.delete_btn)
         
         self.main_layout.addItem(self.btn_layout)
@@ -93,9 +108,57 @@ class CollectionInstanceWidget(QtGui.QWidget):
 
         self.node.parm("influence_" + str(self.idx)).set(value)
 
-    def show_object(self):
+    def remove_item(self):
+        """ Remove item from list, the actual asset node will not be removed
+        """
 
-        pass
+        instances = self.node.parm("instances")
+        instances.removeMultiParmInstance(self.idx - 1)
+
+        self.top_w.remove_item(self)
+
+    def show_object(self):
+        """ Hide / show current collection item
+        """
+        asset_node = hou.node(self.asset_path)
+        assert asset_node is not None, "Asset node not found"
+
+        switch = asset_node.node("show_object")
+        assert switch is not None, "Asset switch node not found"
+
+        if self.displayed:
+            # hide it
+            self.displayed = False
+            switch.parm("input").set(0)
+            self.show_toggle_btn.setIcon(get_icon("eye_close"))
+        else:
+            # show it
+            self.displayed = True
+            switch.parm("input").set(1)
+            self.show_toggle_btn.setIcon(get_icon("eye_open"))
+
+    def change_display_mode(self):
+        """ Change the display mode of the current collection item
+            ( Bounding box, pt clouds, centroid or full geo )
+        """
+
+        self.displayModeMenu.popup(self.mapFromParent(self.display_mode_btn.pos()))
+
+    def set_display_mode(self, mode):
+
+        asset_node = hou.node(self.asset_path)
+        assert asset_node is not None, "Asset node not found"
+
+        _file = asset_node.node("import_file")
+        assert _file is not None, "_file node not found"
+
+        _file.parm("viewportlod").set(mode)
+        if mode == 0:
+            self.display_mode_btn.setIcon(get_icon("tree"))
+        elif mode == 1:
+            self.display_mode_btn.setIcon(get_icon("diffusion"))
+        elif mode == 2:
+            self.display_mode_btn.setIcon(get_icon("cube"))
 
     def dragEnterEvent(self, event):
 
