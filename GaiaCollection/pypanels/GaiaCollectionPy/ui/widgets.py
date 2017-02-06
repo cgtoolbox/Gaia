@@ -7,6 +7,7 @@ import json
 import base64
 import datetime
 import getpass
+import hashlib
 
 from PySide import QtGui
 from PySide import QtCore
@@ -771,6 +772,9 @@ class CreateNewEntryWidget(QtGui.QFrame):
 
         _path = hou.session.GAIA_COLLECTION_ROOT + self.current_category
         metadata["path"] = "%ROOT%" + self.current_category
+
+        # unique ID
+        metadata["uid"] = hashlib.sha1(self.current_category + os.sep + name).hexdigest()
 
         metadata["thumbnail"] = base64.b64encode(self.thumbnail_data)
 

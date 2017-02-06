@@ -17,6 +17,9 @@ reload(nodeInfos)
 from ...ui import widgets
 reload(widgets)
 
+from ...core import cache
+reload(cache)
+
 from ...ui import col_widgets
 reload(col_widgets)
 
@@ -880,6 +883,7 @@ class InstanceItemsContainer(QtGui.QFrame):
         
         comment = metadata["comment"]
         category = metadata["category"]
+        uid = metadata["uid"]
         format = metadata["format"]
         _path = metadata["path"].replace('\\', '/')
         _path = _path.replace("%ROOT%", metadata["collection_root"])
@@ -909,6 +913,25 @@ class InstanceItemsContainer(QtGui.QFrame):
         self.influence_names.append(_name)
         self.grid_layout.update()
         self.nitems_lbl.setText("{} Item(s)".format(nitems + 1))
+
+        # append item to collection subnet
+        collection_sub = cache.get("CURRENT_GAIA_SCATTER_COLLECTION")
+        col_item = collection_sub.node(_name + '_' + uid)
+        if not col_item:
+            col_item = collection_sub.createNode("geo", _name + '_' + uid)
+            col_item.setComment("Collection item, file: " + _path)
+            _file = col_item.node("file1")
+            _file.setName("import_file")
+            _file.parm("file").set(_path)
+            _file.parm("loadtype").set(4)
+            _file.parm("viewportlod").set(0)
+            output = col_item.createNode("output", "OUT_" + _name)
+            output.setInput(0, _file)
+            output.setDisplayFlag(True)
+            output.setRenderFlag(True)
+            col_item.layoutChildren()
+
+        collection_sub.layoutChildren()
 
     def dragEnterEvent(self, event):
 

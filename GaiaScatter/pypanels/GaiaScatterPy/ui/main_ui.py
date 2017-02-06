@@ -115,10 +115,13 @@ class MainUI(QtGui.QWidget):
         """
 
         col_name = gaia_scatter.split('/')[-1]
-        if not hou.node("/obj/" + col_name + "_collection"):
+        n = hou.node("/obj/" + col_name + "_collection")
+        if not n:
             n = hou.node("/obj").createNode("subnet", col_name + "_collection")
             gpos = hou.node(gaia_scatter).position()
             n.setPosition([gpos.x() + 3.0, gpos.y()])
             n.setComment("Collection assets for Gaia Scatter node: " + gaia_scatter)
+
+        cache.set("CURRENT_GAIA_SCATTER_COLLECTION", n)
 
         
