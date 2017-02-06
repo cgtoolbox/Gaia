@@ -141,8 +141,10 @@ class CollectionInstanceWidget(QtGui.QWidget):
         """ Change the display mode of the current collection item
             ( Bounding box, pt clouds, centroid or full geo )
         """
-
-        self.displayModeMenu.popup(self.mapFromParent(self.display_mode_btn.pos()))
+        
+        p = self.display_mode_btn.pos()
+        p = self.parentWidget().mapToGlobal(p)
+        self.displayModeMenu.popup(p)
 
     def set_display_mode(self, mode):
 

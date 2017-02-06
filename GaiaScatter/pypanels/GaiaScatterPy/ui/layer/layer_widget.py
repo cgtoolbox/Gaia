@@ -959,7 +959,16 @@ class InstanceItemsContainer(QtGui.QFrame):
         for i, w in enumerate(self.influence_widgets):
             w.idx = i + 1
 
-        self.grid_layout.update()
+        # reorder widgets
+        for w in self.influence_widgets:
+            self.grid_layout.removeWidget(w)
+
+        for i, w in enumerate(self.influence_widgets):
+                
+                col = i % 4
+                row = i / 4
+                self.grid_layout.addWidget(w, row, col)
+
 
 
     def dragEnterEvent(self, event):
