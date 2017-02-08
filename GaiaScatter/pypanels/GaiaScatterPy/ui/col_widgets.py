@@ -17,22 +17,33 @@ class CollectionInstanceWidget(QtGui.QWidget):
     """ Widget used in the layer widget, when object are dropped from the collection
         to the scatter tool.
     """
-    def __init__(self, node=None, idx=0, thumbnail_binary=None,
-                 asset_path="", tooltip="", _name="",
-                 parent=None):
+    def __init__(self, layer_node=None, item_infos=None, 
+                 set_parms=True, parent=None):
+
         super(CollectionInstanceWidget, self).__init__(parent=parent)
 
-        self.setToolTip(unicode(tooltip))
+        self.setToolTip(unicode(item_infos.tooltip))
         self.setAcceptDrops(True)
         self.top_w = parent
-        self._name = _name
-        self.idx = idx
-        self.node = node
-        self.node.parm("instances").set(idx)
-        self.asset_path = asset_path
-        self.node.parm("path_" + str(idx)).set(asset_path)
-        self.influence = self.node.evalParm("influence_" + str(idx))
-        self.thumbnail_binary = thumbnail_binary
+
+        self._name = item_infos.name
+        self.asset_category = item_infos.category
+        self.asset_path = item_infos.asset_path
+        self.uid = item_infos.uid
+        self.collection_root = item_infos.collection_root.replace('\\', '/')
+
+        self.idx = item_infos.idx
+        self.layer_node = layer_node
+        
+        # When added from collection, parm are set to new values
+        if set_parms:
+            self.layer_node.parm("path_" + str(self.idx)).set(self.asset_path)
+            self.layer_node.parm("category_" + str(self.idx)).set(self.asset_category)
+            self.layer_node.parm("asset_uid_" + str(self.idx)).set(self.uid)
+            self.layer_node.parm("collection_root_" + str(self.idx)).set(self.collection_root)
+
+        self.influence = self.layer_node.evalParm("influence_" + str(self.idx))
+        self.thumbnail_binary = item_infos.thumbnail_binary
 
         # states
         self.displayed = True
@@ -106,7 +117,7 @@ class CollectionInstanceWidget(QtGui.QWidget):
 
     def change_influence(self, value):
 
-        self.node.parm("influence_" + str(self.idx)).set(value)
+        self.layer_node.parm("influence_" + str(self.idx)).set(value)
 
     def remove_item(self):
         """ Remove item from list, the actual asset node will not be removed

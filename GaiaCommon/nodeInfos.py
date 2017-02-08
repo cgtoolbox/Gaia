@@ -8,13 +8,32 @@ class DisplayMode(object):
     POINTS = 3
 
 class GaiaScatterInfos(object):
-
+    """ Main Gaia scatter digital asset infos
+    """
     __slots__ = ["node_path", "node"]
 
     def __init__(self):
 
         self.node_path = ""
         self.node = None
+
+class CollectionItemInfos(object):
+    """ Infos of collection items when added to collection grid
+    """
+    __slots__ = ["collection_root", "category", "uid", "idx", "name",
+                 "tooltip", "asset_path", "thumbnail_binary", "comment"]
+
+    def __init__(self):
+
+        self.name = None
+        self.collection_root = None
+        self.tooltip = None
+        self.asset_path = None
+        self.comment = None
+        self.category = None
+        self.uid = None
+        self.idx = -1
+        self.thumbnail_binary = None
 
 def get_painters(gaia_layer_node):
 

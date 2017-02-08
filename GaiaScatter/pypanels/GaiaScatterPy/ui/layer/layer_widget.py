@@ -1,6 +1,7 @@
 import os
 import hou
 import base64
+import json
 
 from PySide import QtGui
 from PySide import QtCore
@@ -820,15 +821,35 @@ class InstancesListWidget(QtGui.QWidget):
         main_layout.addWidget(self.add_btn)
 
         # list layout
-        self.node = layer_infos.node
+        self.node = hou.node(layer_infos.node.path())
         self.list_widget = InstanceItemsContainer(node=self.node,
                                                   parent=self)
-        
-        instances = self.node.parm("instances").eval()
-        # TODO: read ho many instances are already set on the node and add them to UI
-
         main_layout.addWidget(self.list_widget)
 
+        # read instances
+        instances = self.node.parm("instances").eval()
+        instances_metadata = []
+        for i in range(instances):
+            try:
+                i = str(i + 1)
+                uid = self.node.evalParm("asset_uid_" + i)
+                asset_category = self.node.evalParm("category_" + i)
+                asset_path = self.node.evalParm("path_" + i)
+                root = self.node.evalParm("collection_root_" + i).replace('\\', '/')
+                metadata_name = asset_path.split('/')[-1].replace('_' + uid, "") + ".json"
+                metadata_path = root + asset_category + '/' + metadata_name
+                with open(metadata_path, 'r') as f:
+                    metadata = json.load(f)
+
+                metadata["collection_root"] = root
+                instances_metadata.append(metadata)
+                
+            except hou.OperationFailed:
+                print("Error reading instance " + i)
+
+        if instances_metadata:
+            self.init_collection_grid_items(instances_metadata)
+            
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
         self.setLayout(main_layout)
 
@@ -838,6 +859,10 @@ class InstancesListWidget(QtGui.QWidget):
                                                 parent=None)
         hou.session.GAIA_SCATTER_COLLECTION_W.setStyleSheet(hou.ui.qtStyleSheet())
         hou.session.GAIA_SCATTER_COLLECTION_W.show()
+
+    def init_collection_grid_items(self, metadata_list):
+
+        self.list_widget.init_grid_items(metadata_list)
 
     def append_item(self, metadata):
 
@@ -849,7 +874,8 @@ class InstanceItemsContainer(QtGui.QFrame):
         super(InstanceItemsContainer, self).__init__(parent=parent)
 
         self.influence_widgets = []
-        self.influence_names = []
+        self.assets_uids = []
+        self.n_items = 0
         self.node = node
 
         self.top_w = parent
@@ -873,17 +899,56 @@ class InstanceItemsContainer(QtGui.QFrame):
         main_layout.addWidget(self.scroll_area)
         self.setLayout(main_layout)
 
-    def append_item(self, metadata):
+    def init_grid_items(self, metadata_list):
 
+        for i, metadata in enumerate(metadata_list):
+            i += 1
+
+            w = self.create_collection_grid_item(metadata, i, set_instances_parm=False)
+            self.place_collection_item(w)
+
+    def append_item(self, metadata):
+        """ Append item to grif of items, when the grid is init and existing items are
+            read, set_instance_parm must be set to False as the instances parms is already set
+        """
+
+        new_idx = self.node.evalParm("instances") + 1
+        self.node.parm("instances").set(new_idx)
+
+        w = self.create_collection_grid_item(metadata, new_idx)
+        self.place_collection_item(w)
+
+    def place_collection_item(self, collection_item):
+        """ Place a collection grid item into the grid
+        """
+
+        idx = collection_item.idx
+        col = idx % 4
+        row = idx / 4
+
+        self.grid_layout.addWidget(collection_item, row, col)
+        self.influence_widgets.append(collection_item)
+        self.assets_uids.append(collection_item.uid)
+        self.grid_layout.update()
+        self.nitems_lbl.setText("{} Item(s)".format(self.node.evalParm("instances")))
+
+
+    def create_collection_grid_item(self, metadata, idx, set_instances_parm=True):
+        """ set_instances_parm set to False when items are added from grid init
+            as parms are just read and not created.
+        """
+        
+        # use uid to be sure that the item is not added twice
+        uid = metadata["uid"]
         _name = metadata["name"]
-        if _name in self.influence_names:
+        if uid in self.assets_uids:
             hou.ui.displayMessage("Asset: {} already used in this layer".format(_name))
             return
-        nitems = len(self.influence_widgets)
-        
+
+        item_inf = nodeInfos.CollectionItemInfos()
+
         comment = metadata["comment"]
         category = metadata["category"]
-        uid = metadata["uid"]
         format = metadata["format"]
         _path = metadata["path"].replace('\\', '/')
         _path = _path.replace("%ROOT%", metadata["collection_root"])
@@ -923,23 +988,22 @@ class InstanceItemsContainer(QtGui.QFrame):
                    "Format: {}\n"
                    "Path: {}\n"
                    "Comment: {}".format(_name, category, format, _path, comment))
-        w = col_widgets.CollectionInstanceWidget(node=self.node, idx=nitems + 1,
-                                                 thumbnail_binary=thumbnail_binary,
-                                                 tooltip=tooltip, asset_path=col_item.path(),
-                                                 _name=_name, parent=self)
-        
-        col = 0
-        row = 0
-        if nitems > 0: 
-            
-            col = nitems % 4
-            row = nitems / 4
 
-        self.grid_layout.addWidget(w, row, col)
-        self.influence_widgets.append(w)
-        self.influence_names.append(_name)
-        self.grid_layout.update()
-        self.nitems_lbl.setText("{} Item(s)".format(nitems + 1))
+        item_inf.asset_path = col_item.path()
+        item_inf.category = category
+        item_inf.comment = comment
+        item_inf.uid = uid
+        item_inf.tooltip = tooltip
+        item_inf.idx = idx
+        item_inf.collection_root = metadata["collection_root"]
+        item_inf.thumbnail_binary = thumbnail_binary
+
+        w = col_widgets.CollectionInstanceWidget(layer_node=self.node, item_infos=item_inf,
+                                                 set_parms=set_instances_parm,
+                                                 parent=self)
+
+        return w
+        
 
     def remove_item(self, w):
         """ Remove item from the grid, called from items
