@@ -109,7 +109,6 @@ class LayersWidget(QtGui.QWidget):
                                               node_name=name)
 
         layer_node.setUserData("LATEST_STROKE_ID", "0")
-        #layer_node.allowEditingOfContents()
         layer_infos = nodeInfos.GaiaScatterInfos()
         p = layer_node.path()
         layer_infos.node_path = p
@@ -164,7 +163,6 @@ class LayersWidget(QtGui.QWidget):
             n = container.createNode("Gaia_Paint_Scatter_Layer",
                                      node_name="Layer_1")
             n.setUserData("LATEST_STROKE_ID", "0")
-            #n.allowEditingOfContents()
             childrens = [n]
 
         for n in childrens:
@@ -912,17 +910,25 @@ class InstanceItemsContainer(QtGui.QFrame):
             read, set_instance_parm must be set to False as the instances parms is already set
         """
 
+        uid = metadata["uid"]
+        _name = metadata["name"]
+        if uid in self.assets_uids:
+            hou.ui.displayMessage("Asset: {} already used in this layer".format(_name))
+            return None
+
         new_idx = self.node.evalParm("instances") + 1
         self.node.parm("instances").set(new_idx)
 
         w = self.create_collection_grid_item(metadata, new_idx)
+        if not w: return
+
         self.place_collection_item(w)
 
     def place_collection_item(self, collection_item):
         """ Place a collection grid item into the grid
         """
-
-        idx = collection_item.idx
+        if not collection_item: return
+        idx = collection_item.idx - 1
         col = idx % 4
         row = idx / 4
 
@@ -938,15 +944,10 @@ class InstanceItemsContainer(QtGui.QFrame):
             as parms are just read and not created.
         """
         
-        # use uid to be sure that the item is not added twice
-        uid = metadata["uid"]
-        _name = metadata["name"]
-        if uid in self.assets_uids:
-            hou.ui.displayMessage("Asset: {} already used in this layer".format(_name))
-            return
-
         item_inf = nodeInfos.CollectionItemInfos()
 
+        uid = metadata["uid"]
+        _name = metadata["name"]
         comment = metadata["comment"]
         category = metadata["category"]
         format = metadata["format"]
@@ -1009,8 +1010,8 @@ class InstanceItemsContainer(QtGui.QFrame):
         """ Remove item from the grid, called from items
         """
 
-        if w._name in self.influence_names:
-            self.influence_names.pop(self.influence_names.index(w._name))
+        if w.uid in self.assets_uids:
+            self.assets_uids.pop(self.assets_uids.index(w.uid))
 
         if w in self.influence_widgets:
             self.influence_widgets.pop(self.influence_widgets.index(w))

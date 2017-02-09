@@ -28,6 +28,7 @@ class MainUI(QtGui.QWidget):
         self.create_new_scatter_btn = QtGui.QPushButton("Create New Gaia Scatter")
         self.create_new_scatter_btn.setIcon(get_icon("gaia_add"))
         self.create_new_scatter_btn.setIconSize(QtCore.QSize(50, 50))
+        self.create_new_scatter_btn.clicked.connect(self.create_gaia_scatter)
         self.main_layout.addWidget(self.create_new_scatter_btn)
 
         self.open_scatter_btn = QtGui.QPushButton("Open Gaia Scatter")
@@ -80,6 +81,30 @@ class MainUI(QtGui.QWidget):
         self.layers_w = layer_widget.LayersWidget(top_asset, parent=self)
         self.main_layout.addWidget(self.layers_w)
 
+    def create_gaia_scatter(self):
+
+        nodes = [n.path() for n in hou.node("/obj").children() if not \
+                 n.path().startswith("/obj/ipr_camera")]
+
+        if not nodes:
+            hou.ui.displayMessage("The scene is empty")
+            return
+
+        v, name = hou.ui.readInput("Enter a name:", buttons=["OK", "Cancel"])
+        if v == 1: return
+        name = name.replace(' ', '_')
+
+        terrain_node_id = hou.ui.selectFromList(nodes, title="Terrain Picker", exclusive=True,
+                                                column_header="Terrain Geometry",
+                                                message="Select the terrain geometry:")
+        if not terrain_node_id: return
+        terrain_node_id = terrain_node_id[0]
+
+        gaia_node = hou.node("/obj").createNode("Gaia_Scatter", name)
+        gaia_node.parm("target_geo").set(nodes[terrain_node_id])
+
+        self.init_gaia_scatter_node(gaia_node.path())
+
     def open_scatter_asset(self):
 
         nodes = [n for n in hou.node("/obj").children() \
@@ -94,13 +119,17 @@ class MainUI(QtGui.QWidget):
         r = hou.ui.selectFromList(names, title="Selection", exclusive=True,
                                   column_header="Scatter Assets",
                                   message="Select a Gaia Scatter asset to load:")
-        hou.ui.selectFromList
         if not r: return
 
-        cache.set("CURRENT_GAIA_SCATTER", paths[r[0]])
-        self.init_collection_node(paths[r[0]])
+        node_path = paths[r[0]]
+        self.init_gaia_scatter_node(node_path)
 
-        self.gaia_node_path.setText(paths[r[0]])
+    def init_gaia_scatter_node(self, node_path):
+
+        cache.set("CURRENT_GAIA_SCATTER", node_path)
+        self.init_collection_node(node_path)
+
+        self.gaia_node_path.setText(node_path)
         self.gaia_asset_lbl.setVisible(True)
         self.gaia_node_path.setVisible(True)
         self.create_gaia_node_btn.setVisible(True)

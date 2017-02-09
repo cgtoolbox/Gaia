@@ -123,7 +123,7 @@ class CollectionInstanceWidget(QtGui.QWidget):
         """ Remove item from list, the actual asset node will not be removed
         """
 
-        instances = self.node.parm("instances")
+        instances = self.layer_node.parm("instances")
         instances.removeMultiParmInstance(self.idx - 1)
 
         self.top_w.remove_item(self)
