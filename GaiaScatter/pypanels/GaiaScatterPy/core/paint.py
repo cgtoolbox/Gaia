@@ -64,7 +64,7 @@ def enter_paint_mode(mode=PAINTMODES.NONE, gaia_layer=None):
 
         painter.parm("id").set(cur_id)
         painter.setUserData("time_stamp", str(time.time()))
-        painter.allowEditingOfContents()
+        #painter.allowEditingOfContents()
         painter.setInput(0, input)
         out.setNextInput(painter)
         cur_node = hou.node(painter.path() + "/STROKES")
@@ -87,7 +87,7 @@ def enter_paint_mode(mode=PAINTMODES.NONE, gaia_layer=None):
         eraser.parm("apply_on").set(str(cur_id))
 
         eraser.setUserData("time_stamp", str(time.time()))
-        eraser.allowEditingOfContents()
+        #eraser.allowEditingOfContents()
         eraser.setInput(0, input)
         out.setNextInput(eraser)
         cur_node = hou.node(eraser.path() + "/STROKE_ERASER")
@@ -102,7 +102,7 @@ def enter_paint_mode(mode=PAINTMODES.NONE, gaia_layer=None):
         scale_painter = container.createNode("Gaia_Scale_painter",
                                              node_name="scale_painter_" + str(idx))
         scale_painter.setUserData("time_stamp", str(time.time()))
-        scale_painter.allowEditingOfContents()
+        #scale_painter.allowEditingOfContents()
         scale_painter.setInput(0, input)
         out.setNextInput(scale_painter)
         cur_node = hou.node(scale_painter.path() + "/STROKES_SCALE_PAINTER")

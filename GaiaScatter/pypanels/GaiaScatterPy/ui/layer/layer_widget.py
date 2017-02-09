@@ -109,7 +109,7 @@ class LayersWidget(QtGui.QWidget):
                                               node_name=name)
 
         layer_node.setUserData("LATEST_STROKE_ID", "0")
-        layer_node.allowEditingOfContents()
+        #layer_node.allowEditingOfContents()
         layer_infos = nodeInfos.GaiaScatterInfos()
         p = layer_node.path()
         layer_infos.node_path = p
@@ -164,7 +164,7 @@ class LayersWidget(QtGui.QWidget):
             n = container.createNode("Gaia_Paint_Scatter_Layer",
                                      node_name="Layer_1")
             n.setUserData("LATEST_STROKE_ID", "0")
-            n.allowEditingOfContents()
+            #n.allowEditingOfContents()
             childrens = [n]
 
         for n in childrens:
