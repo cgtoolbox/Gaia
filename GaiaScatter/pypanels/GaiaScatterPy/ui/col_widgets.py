@@ -154,7 +154,7 @@ class CollectionInstanceWidget(QtGui.QWidget):
         """
         
         p = self.display_mode_btn.pos()
-        p = self.parentWidget().mapToGlobal(p)
+        p = self.mapToGlobal(p)
         self.displayModeMenu.popup(p)
 
     def set_display_mode(self, mode):
