@@ -377,6 +377,14 @@ class LayerFillTabWidget(LayerTabWidget):
                                                          parent=self)
         self.scroll_layout.addWidget(self.scatter_rules_w)
 
+        # Strokes Groups
+        self.strokes_groups = strokes.StrokesWidget(self.layer_infos, paint=False, scale=False,)
+        self.strokes_groups_w = widgets.CollapsableWidget(label="Paint",
+                                                          widget=self.strokes_groups,
+                                                          collapsed=True,
+                                                          parent=self)
+        self.scroll_layout.addWidget(self.strokes_groups_w)
+
 class ScatterOptionsWidget(QtGui.QWidget):
 
     def __init__(self, gaia_node=None, parent=None):

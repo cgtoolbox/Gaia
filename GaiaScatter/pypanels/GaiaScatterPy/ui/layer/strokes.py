@@ -16,7 +16,7 @@ PAINTMODES = paint.PAINTMODES
 class StrokesWidget(QtGui.QWidget):
     """ Bottom part
     """
-    def __init__(self, layer_infos=None, parent=None):
+    def __init__(self, layer_infos=None, paint=True, scale=True, eraser=True, parent=None):
         super(StrokesWidget, self).__init__(parent=parent)
 
         self.layer_infos = layer_infos
@@ -25,33 +25,41 @@ class StrokesWidget(QtGui.QWidget):
         main_layout.setSpacing(5)
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
 
+        # buttons displayed
+        self.paint_displayed = paint
+        self.eraser_displayed = eraser
+        self.scale_displayed = scale
+        
         # toolbar (paint mode buttons)
         toolbar_layout = QtGui.QHBoxLayout()
         toolbar_layout.setSpacing(5)
         toolbar_layout.setAlignment(QtCore.Qt.AlignLeft)
 
-        self.paint_stroke_btn = QtGui.QPushButton("")
-        self.paint_stroke_btn.setCheckable(True)
-        self.paint_stroke_btn.setIcon(get_icon("brush"))
-        self.paint_stroke_btn.setToolTip("Paint instances")
-        self.paint_stroke_btn.setIconSize(QtCore.QSize(20, 20))
-        self.paint_stroke_btn.clicked.connect(self.paint_state)
-        toolbar_layout.addWidget(self.paint_stroke_btn)
+        if self.paint_displayed:
+            self.paint_stroke_btn = QtGui.QPushButton("")
+            self.paint_stroke_btn.setCheckable(True)
+            self.paint_stroke_btn.setIcon(get_icon("brush"))
+            self.paint_stroke_btn.setToolTip("Paint instances")
+            self.paint_stroke_btn.setIconSize(QtCore.QSize(20, 20))
+            self.paint_stroke_btn.clicked.connect(self.paint_state)
+            toolbar_layout.addWidget(self.paint_stroke_btn)
 
-        self.eraser_stroke_btn = QtGui.QPushButton("")
-        self.eraser_stroke_btn.setCheckable(True)
-        self.eraser_stroke_btn.setIcon(get_icon("eraser"))
-        self.eraser_stroke_btn.setToolTip("Erase instances")
-        self.eraser_stroke_btn.setIconSize(QtCore.QSize(20, 20))
-        self.eraser_stroke_btn.clicked.connect(self.eraser_state)
-        toolbar_layout.addWidget(self.eraser_stroke_btn)
+        if self.eraser_displayed :
+            self.eraser_stroke_btn = QtGui.QPushButton("")
+            self.eraser_stroke_btn.setCheckable(True)
+            self.eraser_stroke_btn.setIcon(get_icon("eraser"))
+            self.eraser_stroke_btn.setToolTip("Erase instances")
+            self.eraser_stroke_btn.setIconSize(QtCore.QSize(20, 20))
+            self.eraser_stroke_btn.clicked.connect(self.eraser_state)
+            toolbar_layout.addWidget(self.eraser_stroke_btn)
 
-        self.scale_stroke_btn = QtGui.QPushButton("")
-        self.scale_stroke_btn.setCheckable(True)
-        self.scale_stroke_btn.setIcon(get_icon("paint_scale"))
-        self.scale_stroke_btn.setToolTip("Pain instances scale")
-        self.scale_stroke_btn.setIconSize(QtCore.QSize(20, 20))
-        toolbar_layout.addWidget(self.scale_stroke_btn)
+        if self.scale_displayed:
+            self.scale_stroke_btn = QtGui.QPushButton("")
+            self.scale_stroke_btn.setCheckable(True)
+            self.scale_stroke_btn.setIcon(get_icon("paint_scale"))
+            self.scale_stroke_btn.setToolTip("Pain instances scale")
+            self.scale_stroke_btn.setIconSize(QtCore.QSize(20, 20))
+            toolbar_layout.addWidget(self.scale_stroke_btn)
 
         main_layout.addItem(toolbar_layout)
 
@@ -64,29 +72,37 @@ class StrokesWidget(QtGui.QWidget):
     def paint_state(self):
         
         if self.paint_stroke_btn.isChecked():
-            self.eraser_stroke_btn.setEnabled(False)
-            self.scale_stroke_btn.setEnabled(False)
+            if self.eraser_displayed:
+                self.eraser_stroke_btn.setEnabled(False)
+            if self.scale_displayed:
+                self.scale_stroke_btn.setEnabled(False)
 
             node = paint.enter_paint_mode(PAINTMODES.PAINT,
                                           self.layer_infos.node)
             self.strokes_list.add_stroke("painter", node)
         else:
-            self.eraser_stroke_btn.setEnabled(True)
-            self.scale_stroke_btn.setEnabled(True)
+            if self.eraser_displayed:
+                self.eraser_stroke_btn.setEnabled(True)
+            if self.scale_displayed:
+                self.scale_stroke_btn.setEnabled(True)
             paint.exit_paint_mode()
 
     def eraser_state(self):
 
         if self.eraser_stroke_btn.isChecked():
-            self.paint_stroke_btn.setEnabled(False)
-            self.scale_stroke_btn.setEnabled(False)
+            if self.paint_displayed:
+                self.paint_stroke_btn.setEnabled(False)
+            if self.scale_displayed:
+                self.scale_stroke_btn.setEnabled(False)
             node = paint.enter_paint_mode(PAINTMODES.ERASE,
                                           self.layer_infos.node)
 
             self.strokes_list.add_stroke("eraser", node)
         else:
-            self.paint_stroke_btn.setEnabled(True)
-            self.scale_stroke_btn.setEnabled(True)
+            if self.paint_displayed:
+                self.paint_stroke_btn.setEnabled(True)
+            if self.scale_displayed:
+                self.scale_stroke_btn.setEnabled(True)
             paint.exit_paint_mode()
 
 
@@ -125,13 +141,19 @@ class StrokesList(QtGui.QWidget):
         
         painters_container = self.gaia_layer_node.path() + "/PAINTERS"
         painters_container = hou.node(painters_container)
-        painters = [n for n in painters_container.children() \
-                    if n.name().startswith("painter_")]
+        if painters_container:
+            painters = [n for n in painters_container.children() \
+                        if n.name().startswith("painter_")]
+        else:
+            painters = []
 
         erasers_container = self.gaia_layer_node.path() + "/ERASERS"
         erasers_container = hou.node(erasers_container)
-        erasers = [n for n in erasers_container.children() \
-                   if n.name().startswith("eraser_")]
+        if erasers_container:
+            erasers = [n for n in erasers_container.children() \
+                       if n.name().startswith("eraser_")]
+        else:
+            erasers = []
 
         nodes = painters + erasers
 
