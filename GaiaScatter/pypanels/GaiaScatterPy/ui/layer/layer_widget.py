@@ -378,7 +378,7 @@ class LayerFillTabWidget(LayerTabWidget):
         self.scroll_layout.addWidget(self.scatter_rules_w)
 
         # Strokes Groups
-        self.strokes_groups = strokes.StrokesWidget(self.layer_infos, paint=False, scale=False,)
+        self.strokes_groups = strokes.StrokesWidget(self.layer_infos, paint=False,)
         self.strokes_groups_w = widgets.CollapsableWidget(label="Paint",
                                                           widget=self.strokes_groups,
                                                           collapsed=True,
@@ -851,7 +851,9 @@ class InstancesListWidget(QtGui.QWidget):
                 instances_metadata.append(metadata)
                 
             except hou.OperationFailed:
-                print("Error reading instance " + i)
+                print("Error reading instance data " + i)
+            except IOError:
+                print("Error can't read instance data " + i)
 
         if instances_metadata:
             self.init_collection_grid_items(instances_metadata)

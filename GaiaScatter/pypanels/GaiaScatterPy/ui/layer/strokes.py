@@ -3,6 +3,8 @@ import hou
 from PySide import QtGui
 from PySide import QtCore
 
+from GaiaCommon import h_widgets
+
 from ...icons.icon import get_icon
 
 from ...ui import widgets
@@ -59,7 +61,14 @@ class StrokesWidget(QtGui.QWidget):
             self.scale_stroke_btn.setIcon(get_icon("paint_scale"))
             self.scale_stroke_btn.setToolTip("Pain instances scale")
             self.scale_stroke_btn.setIconSize(QtCore.QSize(20, 20))
+            self.scale_stroke_btn.clicked.connect(self.scale_state)
             toolbar_layout.addWidget(self.scale_stroke_btn)
+
+            # scale value widget
+            self.painted_scale_value = h_widgets.HSlider(label="Scale Value:", default_value=0.5,
+                                                         tooltip="Painted scale multiplier applied")
+            self.painted_scale_value.setVisible(False)
+            toolbar_layout.addWidget(self.painted_scale_value)
 
         main_layout.addItem(toolbar_layout)
 
@@ -72,37 +81,82 @@ class StrokesWidget(QtGui.QWidget):
     def paint_state(self):
         
         if self.paint_stroke_btn.isChecked():
+
             if self.eraser_displayed:
                 self.eraser_stroke_btn.setEnabled(False)
+
             if self.scale_displayed:
                 self.scale_stroke_btn.setEnabled(False)
+                self.painted_scale_value.setVisible(False)
 
             node = paint.enter_paint_mode(PAINTMODES.PAINT,
                                           self.layer_infos.node)
             self.strokes_list.add_stroke("painter", node)
+
         else:
             if self.eraser_displayed:
                 self.eraser_stroke_btn.setEnabled(True)
+
             if self.scale_displayed:
                 self.scale_stroke_btn.setEnabled(True)
+                self.painted_scale_value.setVisible(False)
+
             paint.exit_paint_mode()
 
     def eraser_state(self):
 
         if self.eraser_stroke_btn.isChecked():
+
             if self.paint_displayed:
                 self.paint_stroke_btn.setEnabled(False)
+
             if self.scale_displayed:
                 self.scale_stroke_btn.setEnabled(False)
+                self.painted_scale_value.setVisible(False)
+
             node = paint.enter_paint_mode(PAINTMODES.ERASE,
                                           self.layer_infos.node)
 
             self.strokes_list.add_stroke("eraser", node)
+
         else:
             if self.paint_displayed:
                 self.paint_stroke_btn.setEnabled(True)
+
             if self.scale_displayed:
                 self.scale_stroke_btn.setEnabled(True)
+                self.painted_scale_value.setVisible(False)
+
+            paint.exit_paint_mode()
+
+    def scale_state(self):
+
+        if self.scale_stroke_btn.isChecked():
+
+            self.painted_scale_value.setVisible(True)
+
+            if self.paint_displayed:
+                self.paint_stroke_btn.setEnabled(False)
+
+            if self.eraser_displayed:
+                self.eraser_stroke_btn.setEnabled(False)
+
+            node = paint.enter_paint_mode(PAINTMODES.SCALE,
+                                          self.layer_infos.node)
+            self.painted_scale_value.hou_parm = node.parm("scale")
+            self.strokes_list.add_stroke("scale", node)
+
+        else:
+
+            self.painted_scale_value.setVisible(False)
+
+            if self.paint_displayed:
+                self.paint_stroke_btn.setEnabled(True)
+
+            if self.eraser_displayed:
+                self.eraser_stroke_btn.setEnabled(True)
+
+            self.painted_scale_value.hou_parm = None
             paint.exit_paint_mode()
 
 
@@ -155,7 +209,15 @@ class StrokesList(QtGui.QWidget):
         else:
             erasers = []
 
-        nodes = painters + erasers
+        scales_container = self.gaia_layer_node.path() + "/SCALE_PAINTER"
+        scales_container = hou.node(scales_container)
+        if scales_container:
+            scales = [n for n in scales_container.children() \
+                      if n.name().startswith("scale_")]
+        else:
+            scales = []
+
+        nodes = painters + erasers + scales
 
         nodes = sorted(nodes, key=lambda n: float(n.userData("time_stamp")))
         for n in nodes:
@@ -169,6 +231,9 @@ class StrokesList(QtGui.QWidget):
 
         if stroke_type == "eraser":
             w = EraserStroke(strokes_list=self)
+
+        if stroke_type == "scale":
+            w = ScaleStroke(strokes_list=self)
         
         w.stroke_grp_node = stroke_node
         w.id = len(self.strokes)
@@ -250,7 +315,7 @@ class _BaseStroke(QtGui.QWidget):
         self.lbl_value = "Paint Strokes Group"
         self.icon_name = "brush"
         self.type = "painter"
-        self.bg_color = QtGui.QColor(20, 20, 125, 128)
+        self.bg_color = QtGui.QColor(20, 125, 20, 128)
 
     def switch_enable(self):
 
@@ -308,9 +373,17 @@ class EraserStroke(_BaseStroke):
         self.type = "eraser"
         self.bg_color = QtGui.QColor(125, 20, 20, 128)
 
-class ScaleStroke(QtGui.QWidget):
+class ScaleStroke(_BaseStroke):
 
-    def __init__(self, parent=None):
-        super(ScaleStroke, self).__init__(parent=parent)
+    def __init__(self, strokes_list=None, parent=None):
+        super(ScaleStroke, self).__init__(strokes_list=strokes_list,
+                                          parent=parent)
 
         self.setObjectName("scale_stroke")
+
+    def set_type(self):
+
+        self.lbl_value = "Scale Strokes Group"
+        self.icon_name = "paint_scale"
+        self.type = "scale"
+        self.bg_color = QtGui.QColor(20, 20, 125, 128)

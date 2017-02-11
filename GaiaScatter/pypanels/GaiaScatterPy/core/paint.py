@@ -96,7 +96,7 @@ def enter_paint_mode(mode=PAINTMODES.NONE, gaia_layer=None):
         idx = len(nodeInfos.get_scale_painters(gaia_layer)) + 1
         container = hou.node(gaia_layer_path + "SCALE_PAINTER")
         out = hou.node(container.path() + "/merge_scale_painters")
-        input = hou.node(gaia_layer_path + "PAINTERS/INPUT")
+        input = hou.node(gaia_layer_path + "SCALE_PAINTER/INPUT")
         scale_painter = container.createNode("Gaia_Scale_painter",
                                              node_name="scale_painter_" + str(idx))
         scale_painter.setUserData("time_stamp", str(time.time()))
