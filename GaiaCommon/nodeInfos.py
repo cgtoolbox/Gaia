@@ -21,7 +21,8 @@ class CollectionItemInfos(object):
     """ Infos of collection items when added to collection grid
     """
     __slots__ = ["collection_root", "category", "uid", "idx", "name",
-                 "tooltip", "asset_path", "thumbnail_binary", "comment"]
+                 "tooltip", "asset_path", "thumbnail_binary", "comment",
+                 "visible", "display_mode"]
 
     def __init__(self):
 
@@ -34,6 +35,8 @@ class CollectionItemInfos(object):
         self.uid = None
         self.idx = -1
         self.thumbnail_binary = None
+        self.visible = True
+        self.display_mode = 0
 
 def get_painters(gaia_layer_node):
 

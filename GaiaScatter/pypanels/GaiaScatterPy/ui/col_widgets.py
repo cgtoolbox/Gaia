@@ -46,8 +46,8 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.thumbnail_binary = item_infos.thumbnail_binary
 
         # states
-        self.displayed = True
-        self.display_mode = 0
+        self.displayed = item_infos.visible
+        self.display_mode = item_infos.display_mode
 
         self.main_layout = QtGui.QVBoxLayout()
         self.main_layout.setAlignment(QtCore.Qt.AlignTop)
@@ -61,7 +61,10 @@ class CollectionInstanceWidget(QtGui.QWidget):
 
         self.show_toggle_btn = QtGui.QPushButton("")
         self.show_toggle_btn.setToolTip("Hide / Show object")
-        self.show_toggle_btn.setIcon(get_icon("eye_open"))
+        if self.displayed:
+            self.show_toggle_btn.setIcon(get_icon("eye_open"))
+        else:
+            self.show_toggle_btn.setIcon(get_icon("eye_close"))
         self.show_toggle_btn.setFixedWidth(22)
         self.show_toggle_btn.setFixedHeight(22)
         self.show_toggle_btn.setFlat(True)
@@ -69,7 +72,12 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.btn_layout.addWidget(self.show_toggle_btn)
 
         self.display_mode_btn = QtGui.QPushButton("")
-        self.display_mode_btn.setIcon(get_icon("tree"))
+        if self.display_mode == 0:
+            self.display_mode_btn.setIcon(get_icon("tree"))
+        elif self.display_mode == 1:
+            self.display_mode_btn.setIcon(get_icon("diffusion"))
+        else:
+            self.display_mode_btn.setIcon(get_icon("cube"))
         self.display_mode_btn.setFixedWidth(22)
         self.display_mode_btn.setFixedHeight(22)
         self.display_mode_btn.setFlat(True)
@@ -142,11 +150,13 @@ class CollectionInstanceWidget(QtGui.QWidget):
             self.displayed = False
             switch.parm("input").set(0)
             self.show_toggle_btn.setIcon(get_icon("eye_close"))
+            self.layer_node.parm("visible_" + str(self.idx)).set(0)
         else:
             # show it
             self.displayed = True
             switch.parm("input").set(1)
             self.show_toggle_btn.setIcon(get_icon("eye_open"))
+            self.layer_node.parm("visible_" + str(self.idx)).set(1)
 
     def change_display_mode(self):
         """ Change the display mode of the current collection item
@@ -172,6 +182,8 @@ class CollectionInstanceWidget(QtGui.QWidget):
             self.display_mode_btn.setIcon(get_icon("diffusion"))
         elif mode == 2:
             self.display_mode_btn.setIcon(get_icon("cube"))
+
+        self.layer_node.parm("display_mode_" + str(self.idx)).set(mode)
 
     def dragEnterEvent(self, event):
 

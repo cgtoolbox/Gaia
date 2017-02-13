@@ -851,9 +851,9 @@ class InstancesListWidget(QtGui.QWidget):
                 instances_metadata.append(metadata)
                 
             except hou.OperationFailed:
-                print("Error reading instance data " + i)
+                print("Error reading instance data {}: {}".format(self.node.path(), i))
             except IOError:
-                print("Error can't read instance data " + i)
+                print("Error can't read instance data {}: {}".format(self.node.path(), i))
 
         if instances_metadata:
             self.init_collection_grid_items(instances_metadata)
@@ -990,6 +990,10 @@ class InstanceItemsContainer(QtGui.QFrame):
             output.setDisplayFlag(True)
             output.setRenderFlag(True)
             col_item.layoutChildren()
+
+        # display state of collection item
+        item_inf.visible = col_item.node("show_object").evalParm("input")
+        item_inf.display_mode = col_item.node("import_file").evalParm("viewportlod")
 
         collection_sub.layoutChildren()
 
