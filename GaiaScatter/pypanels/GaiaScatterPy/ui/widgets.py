@@ -26,6 +26,7 @@ class HSlider(QtGui.QWidget):
 
         call value() to get the current value of the slider (return int or float).
     """
+    
     def __init__(self, label="", _type="float", default_value=0.0,
                  min=0.0, max=10.0, lock_min=True, lock_max=False,
                  enable_checkbox=False, enable=True,
@@ -181,7 +182,7 @@ class HSlider(QtGui.QWidget):
         
         self.numeric.setText(str(value))
         self._validate_numeric()
-
+        
         if self.hou_parm:
             self.hou_parm.set(value)
 
@@ -279,6 +280,42 @@ class HVector(QtGui.QWidget):
             return [int(i.text()) for i in self.vector_widgets]
         return [float(i.text()) for i in self.vector_widgets]
 
+class HLabeledCheckbox(QtGui.QWidget):
+
+    clicked = QtCore.Signal()
+
+    def __init__(self, label="", default_state=True, parent=None):
+        super(HLabeledCheckbox, self).__init__(parent=parent)
+
+        main_layout = QtGui.QHBoxLayout()
+        main_layout.setContentsMargins(0,0,0,0)
+
+        self.checkbox = QtGui.QCheckBox()
+        self.checkbox.setChecked(default_state)
+        self.checkbox.clicked.connect(self.__clicked)
+        main_layout.addWidget(self.checkbox)
+
+        self.label = QtGui.QLabel(label)
+        main_layout.addWidget(self.label)
+
+        main_layout.setAlignment(QtCore.Qt.AlignLeft)
+        self.setLayout(main_layout)
+        self.setContentsMargins(0,0,0,0)
+
+    def isChecked(self):
+
+        return self.checkbox.isChecked()
+
+    def setChecked(self, state):
+
+        self.checkbox.setChecked(state)
+
+    def __clicked(self):
+        
+        state = self.checkbox.isChecked()
+        self.label.setEnabled(state)
+        self.clicked.emit()
+
 class InstanceModelWidget(QtGui.QWidget):
 
     def __init__(self, path="", influence=50.0, idx=0, gaia_node=None,
@@ -309,10 +346,12 @@ class InstanceModelWidget(QtGui.QWidget):
 
 class HStringValue(QtGui.QWidget):
 
+    value_changed = QtCore.Signal(str)
+
     def __init__(self, default="", label="",
                  pick_list_callback=None, multiple_values=False,
-                 enable_checkbox=False, enable=True,
-                 hou_parm=None, hou_checkbox=None,
+                 enable_checkbox=False, enable=True, append_value=False,
+                 hou_parm=None, hou_checkbox=None, read_only=False,
                  parent=None):
         super(HStringValue, self).__init__(parent=parent)
         
@@ -327,6 +366,7 @@ class HStringValue(QtGui.QWidget):
         self.hou_parm = hou_parm
         self.hou_checkbox = hou_checkbox
         self.multiple_values = multiple_values
+        self.append_value = append_value
 
         if enable_checkbox:
             self.enable_checkbox = QtGui.QCheckBox()
@@ -340,6 +380,7 @@ class HStringValue(QtGui.QWidget):
             main_layout.addWidget(self.lbl)
 
         self.string_input = QtGui.QLineEdit()
+        self.string_input.setReadOnly(read_only)
         self.string_input.returnPressed.connect(self.valid)
         self.string_input.setText(default)
         self.string_input.setEnabled(enable)
@@ -361,8 +402,13 @@ class HStringValue(QtGui.QWidget):
 
     def set_value(self, value):
 
+        if self.append_value:
+            value = str(self.hou_parm.eval()) + ' ' + value
+
         self.hou_parm.set(str(value))
         self.string_input.setText(str(value))
+
+        self.value_changed.emit(value)
 
     def toggle_enable(self):
 
@@ -377,13 +423,19 @@ class HStringValue(QtGui.QWidget):
 
         if self.hou_parm:
             value = str(self.string_input.text())
+
+            if self.append_value:
+                value = str(self.hou_parm.eval()) + ' ' + value
+
             self.hou_parm.set(value)
+            self.value_changed.emit(value)
 
     def pick(self):
 
         choices = self.pick_list_callback()
         r = hou.ui.selectFromList(choices,
-                                  title="Pick an item")
+                                  title="Pick an item",
+                                  exclusive=not self.multiple_values)
         if not r: return
 
         value = ' '.join([choices[i] for i in r])
@@ -396,7 +448,11 @@ class HStringValue(QtGui.QWidget):
             value = cur_val + value
 
         self.string_input.setText(value)
+        if self.append_value:
+            value = str(self.hou_parm.eval()) + ' ' + value
+
         self.hou_parm.set(value)
+        self.value_changed.emit(value)
 
 class CollapsableWidget(QtGui.QWidget):
     """ Custom widget which makes a given widget "collapsable" (hidden/shown)

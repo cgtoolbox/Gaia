@@ -649,8 +649,8 @@ class ScatterRulesWidget(QtGui.QWidget):
         main_layout.setSpacing(5)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
 
-        self.input_geo = hou.node(gaia_node.node_path + "/INPUT_GEO").geometry()
-        self.scatter = hou.node(gaia_node.node_path + "/RAW_POINTS")
+        self.input_geo = gaia_node.node.node("INPUT_GEO").geometry()
+        self.scatter = gaia_node.node.node("RAW_POINTS")
         fill_node = gaia_node.node
 
         if is_fill:
@@ -669,8 +669,8 @@ class ScatterRulesWidget(QtGui.QWidget):
             main_layout.addWidget(self.density_attrib)
         
         # OCCLUDER
-        occluder_node = hou.node(gaia_node.node_path + "/IMPORT_OCCLUDER")
-        occluder_switch = hou.node(gaia_node.node_path + "/switch_use_occluder")
+        occluder_node = gaia_node.node.node("IMPORT_OCCLUDER")
+        occluder_switch = gaia_node.node.node("switch_use_occluder")
         
         self.mesh_occluder = widgets.HStringValue(label="Mesh Occluder",
                                                   enable_checkbox=True,
@@ -682,6 +682,12 @@ class ScatterRulesWidget(QtGui.QWidget):
         self.mesh_occluder.pick = self._pick_occl
         main_layout.addWidget(self.mesh_occluder)
 
+        # EXCLUDE LAYER
+        exclude_layer_node = gaia_node.node.node("EXCLUDE_LAYERS")
+        self.exclude_layer = LayerExcludeWidget(exclude_layer_node, self)
+        main_layout.addWidget(self.exclude_layer)
+
+        # BASIC RULES
         main_layout.addWidget(QtGui.QLabel("Min/Max normalized values:"))
 
         # ALTITUDE RULE
@@ -809,6 +815,186 @@ class ScatterRulesWidget(QtGui.QWidget):
 
         return [a.name() for a in self.input_geo.pointAttribs()\
                 if a.name() not in ["P", "Pw", "Cd"]]
+
+class LayerExcludeWidget(QtGui.QWidget):
+    """ Exclude given layer(s) from current layer according to a radius
+    """
+    def __init__(self, exclude_layer_node=None, parent=None):
+        super(LayerExcludeWidget, self).__init__(parent=parent)
+
+        self.setContentsMargins(0,0,0,0)
+
+        self.top_w = parent
+
+        self.exclude_layer_node = exclude_layer_node
+        self.cur_layer = self.exclude_layer_node.parent()
+        self.LAYERS = self.cur_layer.parent()
+
+        self.widgets = []
+        self.layer_widgets = []
+
+        main_layout = QtGui.QVBoxLayout()
+        main_layout.setAlignment(QtCore.Qt.AlignTop)
+
+        self.enable_exclude = widgets.HLabeledCheckbox("Layers Exclusion", True)
+        self.enable_exclude.clicked.connect(self.enable_widget)
+        main_layout.addWidget(self.enable_exclude)
+
+        toolbar_layout = QtGui.QHBoxLayout()
+        self.add_layer_btn = QtGui.QPushButton("Add Layer")
+        self.add_layer_btn.setIcon(get_icon("add"))
+        self.widgets.append(self.add_layer_btn)
+        toolbar_layout.addWidget(self.add_layer_btn)
+
+        self.clear_layers_btn = QtGui.QPushButton("Clear All Layers")
+        self.clear_layers_btn.setIcon(get_icon("close"))
+        self.widgets.append(self.clear_layers_btn)
+        toolbar_layout.addWidget(self.clear_layers_btn)
+        
+        main_layout.addLayout(toolbar_layout)
+
+        self.scroll_layout = QtGui.QVBoxLayout()
+        self.scroll_w = QtGui.QWidget()
+        self.scroll_w.setLayout(self.scroll_layout)
+        self.scroll_area = QtGui.QScrollArea()
+        self.scroll_area.setStyleSheet("""QScrollArea{background-color:#2d3c5f}""")
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setWidget(self.scroll_w)
+        self.scroll_area.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+        main_layout.addWidget(self.scroll_area)
+
+        main_layout.setContentsMargins(0,0,0,0)
+        self.setLayout(main_layout)
+
+        self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+
+        self.init_widgets()
+
+    def init_widgets(self):
+
+        layers = [ v for v in self.exclude_layer_node.evalParm("layer_list").split(' ') if v]
+
+        for layer in layers:
+
+            if not layer: continue
+            if not self.LAYERS.node(layer): continue
+
+            w = _LayerExcludeElement(layer, self)
+            self.scroll_layout.addWidget(w)
+            self.widgets.append(w)
+            self.layer_widgets.append(w)
+
+        self.refresh_layer_imports(layers)
+
+
+    def refresh_layer_imports(self, layer_names):
+        
+        checked_names = []
+        invalid_names = []
+
+        for s in layer_names:
+
+            if not s: continue
+
+            node = self.LAYERS.node(s)
+            if not node:
+                invalid_names.append(s)
+                continue
+
+            # create the object merge to import layer, if it doesn't exists
+            import_layer = self.exclude_layer_node.node("import_layer_" + s)
+            merge_layers = self.exclude_layer_node.node("MERGE_LAYERS")
+            if not import_layer:
+                n = "import_layer_" + s
+                import_layer = self.exclude_layer_node.createNode("Gaia_Import_Exclude_Layer", n)
+                import_layer.parm("path").set(self.LAYERS.node(s).path() + "/OUT")
+                
+                merge_layers.setInput(len(merge_layers.inputs()), import_layer)
+
+            checked_names.append(s)
+
+        self.exclude_layer_node.parm("layer_list").set(' '.join(checked_names))
+
+        # delete missing layers
+        for s in invalid_names:
+            n_todel = self.LAYERS.node("import_layer_" + s)
+            if n_todel:
+                n_todel.destroy()
+
+        # delete left over nodes if any
+        for n in [n for n in self.exclude_layer_node.children() if \
+                  n.type().name() == "Gaia_Import_Exclude_Layer"]:
+            n_name = n.name()
+            if n_name.replace("import_layer_", '') not in layer_names:
+                n.destroy()
+
+        self.exclude_layer_node.layoutChildren()
+
+    def fetch_layers(self):
+
+        layers = [layer for layer in self.LAYERS.children() if \
+                  layer.name() not in ["Layer_dummy", self.cur_layer.name()]]
+
+        return [layer.name() for layer in layers]
+
+    def enable_widget(self):
+
+        state = self.enable_exclude.isChecked()
+        for w in self.widgets:
+            w.setEnabled(state)
+
+        self.exclude_layer_node.parm("enable").set(state)
+
+        if state:
+            self.scroll_area.setStyleSheet("""QScrollArea{background-color:#2d3c5f}""")
+        else:
+            self.scroll_area.setStyleSheet("""QScrollArea{background-color:#505562}""")
+        
+class _LayerExcludeElement(QtGui.QWidget):
+
+    def __init__(self, default="", parent=None):
+        super(_LayerExcludeElement, self).__init__(parent=parent)
+
+        self.top_w = parent
+
+        main_layout = QtGui.QHBoxLayout()
+        main_layout.setAlignment(QtCore.Qt.AlignLeft)
+        hou_parm = self.top_w.exclude_layer_node.parm("layer_list")
+
+        self.layer_to_exclude = widgets.HStringValue(label="Layer",
+                                                     default=default, append_value=True,
+                                                     hou_parm=hou_parm, read_only=True,
+                                                     pick_list_callback=self.top_w.fetch_layers)
+        self.layer_to_exclude.setToolTip("Layer you want to exclude from current scattering layer. (Use button to change the value)")
+        self.layer_to_exclude.lbl.setStyleSheet("QLabel{background: transparent}")
+        self.layer_to_exclude.value_changed.connect(self.refresh_layer_imports)
+        main_layout.addWidget(self.layer_to_exclude)
+
+        self.radius_w = widgets.HSlider(label="Radius", default_value=2.0)
+        self.radius_w.lbl.setStyleSheet("QLabel{background: transparent}")
+        main_layout.addWidget(self.radius_w)
+
+        self.hide_btn = QtGui.QPushButton("")
+        self.hide_btn.setFixedSize(QtCore.QSize(28, 28))
+        self.hide_btn.setIconSize(QtCore.QSize(24, 24))
+        self.hide_btn.setIcon(get_icon("eye_open"))
+        main_layout.addWidget(self.hide_btn)
+
+        self.delete_btn = QtGui.QPushButton()
+        self.delete_btn.setFixedSize(QtCore.QSize(28, 28))
+        self.delete_btn.setIconSize(QtCore.QSize(24, 24))
+        self.delete_btn.setIcon(get_icon("close"))
+        main_layout.addWidget(self.delete_btn)
+
+        main_layout.setContentsMargins(1,1,1,1)
+        self.setLayout(main_layout)
+
+    def refresh_layer_imports(self, value):
+        
+        layer_names = self.top_w.exclude_layer_node.evalParm("layer_list").split(' ')
+        layer_names = list(set(layer_names))
+        self.top_w.refresh_layer_imports(layer_names)
+
 
 class InstancesListWidget(QtGui.QWidget):
 
