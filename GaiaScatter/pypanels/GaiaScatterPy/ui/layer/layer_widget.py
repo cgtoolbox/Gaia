@@ -843,11 +843,13 @@ class LayerExcludeWidget(QtGui.QWidget):
         toolbar_layout = QtGui.QHBoxLayout()
         self.add_layer_btn = QtGui.QPushButton("Add Layer")
         self.add_layer_btn.setIcon(get_icon("add"))
+        self.add_layer_btn.clicked.connect(self.add_layer)
         self.widgets.append(self.add_layer_btn)
         toolbar_layout.addWidget(self.add_layer_btn)
 
         self.clear_layers_btn = QtGui.QPushButton("Clear All Layers")
         self.clear_layers_btn.setIcon(get_icon("close"))
+        self.clear_layers_btn.clicked.connect(self.clear_layers)
         self.widgets.append(self.clear_layers_btn)
         toolbar_layout.addWidget(self.clear_layers_btn)
         
@@ -870,6 +872,15 @@ class LayerExcludeWidget(QtGui.QWidget):
 
         self.init_widgets()
 
+    def add_layer(self):
+
+        w = _LayerExcludeElement(parent=self)
+        self.scroll_layout.addWidget(w)
+        self.widgets.append(w)
+        self.layer_widgets.append(w)
+        layers = [ v for v in self.exclude_layer_node.evalParm("layer_list").split(' ') if v]
+        self.refresh_layer_imports(layers)
+
     def init_widgets(self):
 
         layers = [ v for v in self.exclude_layer_node.evalParm("layer_list").split(' ') if v]
@@ -879,7 +890,7 @@ class LayerExcludeWidget(QtGui.QWidget):
             if not layer: continue
             if not self.LAYERS.node(layer): continue
 
-            w = _LayerExcludeElement(layer, self)
+            w = _LayerExcludeElement(layer, parent=self)
             self.scroll_layout.addWidget(w)
             self.widgets.append(w)
             self.layer_widgets.append(w)
@@ -930,6 +941,29 @@ class LayerExcludeWidget(QtGui.QWidget):
 
         self.exclude_layer_node.layoutChildren()
 
+    def delete_w(self, w):
+
+        w.setParent(None)
+        self.scroll_layout.removeWidget(w)
+        w.deleteLater()
+
+        if w in self.widgets:
+            self.widgets.remove(w)
+
+        if w in self.layer_widgets:
+            self.layer_widgets.remove(w)
+
+    def clear_layers(self):
+
+        if not self.layer_widgets: return
+
+        r = hou.ui.displayMessage("Delete all layer exclusion ?",
+                                    buttons=["Ok", "Cancel"], help="This can't be undo !")
+        if r == 1: return
+
+        for w in self.layer_widgets[::-1]:
+            w.delete(show_ui=False)
+
     def fetch_layers(self):
 
         layers = [layer for layer in self.LAYERS.children() if \
@@ -952,10 +986,11 @@ class LayerExcludeWidget(QtGui.QWidget):
         
 class _LayerExcludeElement(QtGui.QWidget):
 
-    def __init__(self, default="", parent=None):
+    def __init__(self, default="", visible=True, parent=None):
         super(_LayerExcludeElement, self).__init__(parent=parent)
 
         self.top_w = parent
+        self.visible = visible
 
         main_layout = QtGui.QHBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -977,17 +1012,62 @@ class _LayerExcludeElement(QtGui.QWidget):
         self.hide_btn = QtGui.QPushButton("")
         self.hide_btn.setFixedSize(QtCore.QSize(28, 28))
         self.hide_btn.setIconSize(QtCore.QSize(24, 24))
-        self.hide_btn.setIcon(get_icon("eye_open"))
+        self.hide_btn.clicked.connect(self.switch_visible)
+        if self.visible:
+            self.hide_btn.setIcon(get_icon("eye_open"))
+        else:
+            self.hide_btn.setIcon(get_icon("eye_close"))
         main_layout.addWidget(self.hide_btn)
 
         self.delete_btn = QtGui.QPushButton()
         self.delete_btn.setFixedSize(QtCore.QSize(28, 28))
         self.delete_btn.setIconSize(QtCore.QSize(24, 24))
         self.delete_btn.setIcon(get_icon("close"))
+        self.delete_btn.clicked.connect(self.delete)
         main_layout.addWidget(self.delete_btn)
 
         main_layout.setContentsMargins(1,1,1,1)
         self.setLayout(main_layout)
+
+    def delete(self, show_ui=True):
+
+        if show_ui:
+            r = hou.ui.displayMessage("Delete layer exclusion: " + self.layer_to_exclude.text() + " ?",
+                                      buttons=["Ok", "Cancel"], help="This can't be undo !")
+            if r == 1: return
+
+        _node_name = self.layer_to_exclude.text()
+        node_name = "import_layer_" + _node_name
+        imp_node = self.top_w.exclude_layer_node.node(node_name)
+        if imp_node:
+            imp_node.destroy()
+
+        cur_layers = self.top_w.exclude_layer_node.evalParm("layer_list").split(' ')
+        if _node_name in cur_layers:
+            cur_layers.remove(_node_name)
+
+        self.top_w.exclude_layer_node.parm("layer_list").set(' '.join(cur_layers))
+
+        self.top_w.delete_w(self)
+
+    def switch_visible(self):
+
+        node_name = "import_layer_" + self.layer_to_exclude.text()
+        imp_node = self.top_w.exclude_layer_node.node(node_name)
+        if not imp_node: return
+
+        if self.visible:
+            self.hide_btn.setIcon(get_icon("eye_close"))
+            imp_node.parm("enable").set(False)
+            self.layer_to_exclude.setEnabled(False)
+            self.radius_w.setEnabled(False)
+            self.visible = False
+        else:
+            self.hide_btn.setIcon(get_icon("eye_open"))
+            imp_node.parm("enable").set(True)
+            self.layer_to_exclude.setEnabled(True)
+            self.radius_w.setEnabled(True)
+            self.visible = True
 
     def refresh_layer_imports(self, value):
         

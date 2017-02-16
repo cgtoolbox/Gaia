@@ -400,6 +400,10 @@ class HStringValue(QtGui.QWidget):
         self.setLayout(main_layout)
         self.setContentsMargins(0,0,0,0)
 
+    def text(self):
+
+        return self.string_input.text()
+
     def set_value(self, value):
 
         if self.append_value:
