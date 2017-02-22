@@ -3,8 +3,9 @@ import hou
 import base64
 import json
 
-from PySide import QtGui
-from PySide import QtCore
+from PySide2 import QtWidgets
+from PySide2 import QtGui
+from PySide2 import QtCore
 
 from . import strokes
 reload(strokes)
@@ -28,12 +29,13 @@ from ...icons.icon import get_icon
 
 from GaiaCollectionPy.ui.widgets import CreateNewEntryWidget
 
-class LayersWidget(QtGui.QWidget):
+class LayersWidget(QtWidgets.QWidget):
 
     def __init__(self, top_asset, parent=None):
         super(LayersWidget, self).__init__(parent=parent)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
+        self.setProperty("houdiniStyle", True)
 
         self.top_asset = top_asset
         self.instance_node = hou.node(self.top_asset.path() + "/PACKED_COPIES")
@@ -47,7 +49,7 @@ class LayersWidget(QtGui.QWidget):
 
         # tab widget
         self.layers = []
-        self.tabs = QtGui.QTabWidget()
+        self.tabs = QtWidgets.QTabWidget()
         self.tabs.setStyleSheet("""
         QTabWidget::tab-bar {
             left: 5px;
@@ -75,7 +77,7 @@ class LayersWidget(QtGui.QWidget):
         }
         """)
 
-        self.add_layer_btn = QtGui.QPushButton(self)
+        self.add_layer_btn = QtWidgets.QPushButton(self)
         self.add_layer_btn.setToolTip("Create a new layer")
         self.add_layer_btn.setFlat(True)
         self.add_layer_btn.setIcon(get_icon("add_plane"))
@@ -193,10 +195,11 @@ class LayersWidget(QtGui.QWidget):
 
         self.instance_node.cook(True)
 
-class LayerTabWidget(QtGui.QWidget):
+class LayerTabWidget(QtWidgets.QWidget):
 
     def __init__(self, layer_infos=None, tabs_widget=None, parent=None):
         super(LayerTabWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.setObjectName("layer")
         self.layer_infos = layer_infos
@@ -204,31 +207,32 @@ class LayerTabWidget(QtGui.QWidget):
         self.enabled = True
         self.tabs_widget = tabs_widget
 
+
         # layouts
-        self.main_layout = QtGui.QVBoxLayout()
+        self.main_layout = QtWidgets.QVBoxLayout()
         self.main_layout.setSpacing(0)
         self.main_layout.setAlignment(QtCore.Qt.AlignTop|QtCore.Qt.AlignLeft)
 
         # top toolbar
-        top_toolbar_layout = QtGui.QHBoxLayout()
+        top_toolbar_layout = QtWidgets.QHBoxLayout()
         top_toolbar_layout.setSpacing(5)
         top_toolbar_layout.setAlignment(QtCore.Qt.AlignLeft)
 
-        self.save_lay_btn = QtGui.QPushButton("")
+        self.save_lay_btn = QtWidgets.QPushButton("")
         self.save_lay_btn.setIcon(get_icon("diskette"))
         self.save_lay_btn.setIconSize(QtCore.QSize(24,24))
         self.save_lay_btn.setToolTip("Save current layer to external geo file")
         self.save_lay_btn.clicked.connect(self.save)
         top_toolbar_layout.addWidget(self.save_lay_btn)
 
-        self.infos_lay_btn = QtGui.QPushButton("")
+        self.infos_lay_btn = QtWidgets.QPushButton("")
         self.infos_lay_btn.setIcon(get_icon("white_list"))
         self.infos_lay_btn.setIconSize(QtCore.QSize(24,24))
         self.infos_lay_btn.setToolTip("Get informations about current layer")
         self.infos_lay_btn.clicked.connect(self.display_infos)
         top_toolbar_layout.addWidget(self.infos_lay_btn)
 
-        self.hide_lay_btn = QtGui.QPushButton("")
+        self.hide_lay_btn = QtWidgets.QPushButton("")
         if self.layer_infos.node.parm("enable").eval():
             self.hide_lay_btn.setIcon(get_icon("eye_open"))
         else:
@@ -239,7 +243,7 @@ class LayerTabWidget(QtGui.QWidget):
         self.hide_lay_btn.clicked.connect(self.switch_enable)
         top_toolbar_layout.addWidget(self.hide_lay_btn)
 
-        self.delete_lay_btn = QtGui.QPushButton("")
+        self.delete_lay_btn = QtWidgets.QPushButton("")
         self.delete_lay_btn.setIcon(get_icon("close"))
         self.delete_lay_btn.setIconSize(QtCore.QSize(24,24))
         self.delete_lay_btn.setToolTip("Delete the Gaia layer")
@@ -249,12 +253,13 @@ class LayerTabWidget(QtGui.QWidget):
         self.main_layout.addItem(top_toolbar_layout)
 
         # scroll layout part
-        self.scroll = QtGui.QScrollArea()
-        self.scroll.setStyleSheet("""QScrollArea{border:0px}""")
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setStyleSheet("""QScrollArea{border:0px;
+                                                 background-color: transparent}""")
         self.scroll.setContentsMargins(0,0,0,0)
         self.scroll.setWidgetResizable(True)
-        self.scroll_widget = QtGui.QWidget()
-        self.scroll_layout = QtGui.QVBoxLayout()
+        self.scroll_widget = QtWidgets.QWidget()
+        self.scroll_layout = QtWidgets.QVBoxLayout()
         self.scroll_layout.setAlignment(QtCore.Qt.AlignTop)
         self.scroll_layout.setContentsMargins(3,3,3,3)
 
@@ -385,12 +390,13 @@ class LayerFillTabWidget(LayerTabWidget):
                                                           parent=self)
         self.scroll_layout.addWidget(self.strokes_groups_w)
 
-class ScatterOptionsWidget(QtGui.QWidget):
+class ScatterOptionsWidget(QtWidgets.QWidget):
 
     def __init__(self, gaia_node=None, parent=None):
         super(ScatterOptionsWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(5)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -467,7 +473,7 @@ class ScatterOptionsWidget(QtGui.QWidget):
                                                  hou_parm=self.gaia_node.parm("base_scale"))
         main_layout.addWidget(self.radius_multiplier)
 
-        self.radius_affects_scale = QtGui.QCheckBox("radius affects scale")
+        self.radius_affects_scale = QtWidgets.QCheckBox("radius affects scale")
         self.radius_affects_scale.setChecked(self.default["radius_affects_scale"])
         self.radius_affects_scale.clicked.connect(self.checkbox_radius_callback)
         main_layout.addWidget(self.radius_affects_scale)
@@ -516,12 +522,13 @@ class ScatterOptionsWidget(QtGui.QWidget):
 
         return values
 
-class FillScatterOptionsWidget(QtGui.QWidget):
+class FillScatterOptionsWidget(QtWidgets.QWidget):
 
     def __init__(self, gaia_node=None, parent=None):
         super(FillScatterOptionsWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(5)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -640,12 +647,13 @@ class FillScatterOptionsWidget(QtGui.QWidget):
 
         return values
 
-class ScatterRulesWidget(QtGui.QWidget):
+class ScatterRulesWidget(QtWidgets.QWidget):
 
     def __init__(self, gaia_node=None, is_fill=False, parent=None):
         super(ScatterRulesWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(5)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -688,10 +696,10 @@ class ScatterRulesWidget(QtGui.QWidget):
         main_layout.addWidget(self.exclude_layer)
 
         # BASIC RULES
-        main_layout.addWidget(QtGui.QLabel("Min/Max normalized values:"))
+        main_layout.addWidget(QtWidgets.QLabel("Min/Max normalized values:"))
 
         # ALTITUDE RULE
-        alti_layout = QtGui.QHBoxLayout()
+        alti_layout = QtWidgets.QHBoxLayout()
         alti_layout.setContentsMargins(0,0,0,0)
         alti_layout.setSpacing(3)
         alti_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -714,7 +722,7 @@ class ScatterRulesWidget(QtGui.QWidget):
         main_layout.addItem(alti_layout)
 
         # CURVATURE RULE
-        curv_layout = QtGui.QHBoxLayout()
+        curv_layout = QtWidgets.QHBoxLayout()
         curv_layout.setContentsMargins(0,0,0,0)
         curv_layout.setSpacing(3)
         curv_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -736,7 +744,7 @@ class ScatterRulesWidget(QtGui.QWidget):
         main_layout.addItem(curv_layout)
 
         # SLOPE RULE
-        slope_layout = QtGui.QHBoxLayout()
+        slope_layout = QtWidgets.QHBoxLayout()
         slope_layout.setContentsMargins(0,0,0,0)
         slope_layout.setSpacing(3)
         slope_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -759,7 +767,7 @@ class ScatterRulesWidget(QtGui.QWidget):
         main_layout.addItem(slope_layout)
 
         # OCCLUSION RULE
-        occ_layout = QtGui.QHBoxLayout()
+        occ_layout = QtWidgets.QHBoxLayout()
         occ_layout.setContentsMargins(0,0,0,0)
         occ_layout.setSpacing(3)
         occ_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -782,7 +790,7 @@ class ScatterRulesWidget(QtGui.QWidget):
         main_layout.addItem(occ_layout)
 
         # reset button
-        reset_btn = QtGui.QPushButton("reset")
+        reset_btn = QtWidgets.QPushButton("reset")
         reset_btn.clicked.connect(self.reset)
         main_layout.addWidget(reset_btn)
 
@@ -816,11 +824,12 @@ class ScatterRulesWidget(QtGui.QWidget):
         return [a.name() for a in self.input_geo.pointAttribs()\
                 if a.name() not in ["P", "Pw", "Cd"]]
 
-class LayerExcludeWidget(QtGui.QWidget):
+class LayerExcludeWidget(QtWidgets.QWidget):
     """ Exclude given layer(s) from current layer according to a radius
     """
     def __init__(self, exclude_layer_node=None, parent=None):
         super(LayerExcludeWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.setContentsMargins(0,0,0,0)
 
@@ -833,21 +842,21 @@ class LayerExcludeWidget(QtGui.QWidget):
         self.widgets = []
         self.layer_widgets = []
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
 
         self.enable_exclude = widgets.HLabeledCheckbox("Layers Exclusion", True)
         self.enable_exclude.clicked.connect(self.enable_widget)
         main_layout.addWidget(self.enable_exclude)
 
-        toolbar_layout = QtGui.QHBoxLayout()
-        self.add_layer_btn = QtGui.QPushButton("Add Layer")
+        toolbar_layout = QtWidgets.QHBoxLayout()
+        self.add_layer_btn = QtWidgets.QPushButton("Add Layer")
         self.add_layer_btn.setIcon(get_icon("add"))
         self.add_layer_btn.clicked.connect(self.add_layer)
         self.widgets.append(self.add_layer_btn)
         toolbar_layout.addWidget(self.add_layer_btn)
 
-        self.clear_layers_btn = QtGui.QPushButton("Clear All Layers")
+        self.clear_layers_btn = QtWidgets.QPushButton("Clear All Layers")
         self.clear_layers_btn.setIcon(get_icon("close"))
         self.clear_layers_btn.clicked.connect(self.clear_layers)
         self.widgets.append(self.clear_layers_btn)
@@ -855,20 +864,20 @@ class LayerExcludeWidget(QtGui.QWidget):
         
         main_layout.addLayout(toolbar_layout)
 
-        self.scroll_layout = QtGui.QVBoxLayout()
-        self.scroll_w = QtGui.QWidget()
+        self.scroll_layout = QtWidgets.QVBoxLayout()
+        self.scroll_w = QtWidgets.QWidget()
         self.scroll_w.setLayout(self.scroll_layout)
-        self.scroll_area = QtGui.QScrollArea()
+        self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setStyleSheet("""QScrollArea{background-color:#2d3c5f}""")
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_w)
-        self.scroll_area.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+        self.scroll_area.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         main_layout.addWidget(self.scroll_area)
 
         main_layout.setContentsMargins(0,0,0,0)
         self.setLayout(main_layout)
 
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
         self.init_widgets()
 
@@ -984,15 +993,16 @@ class LayerExcludeWidget(QtGui.QWidget):
         else:
             self.scroll_area.setStyleSheet("""QScrollArea{background-color:#505562}""")
         
-class _LayerExcludeElement(QtGui.QWidget):
+class _LayerExcludeElement(QtWidgets.QWidget):
 
     def __init__(self, default="", visible=True, parent=None):
         super(_LayerExcludeElement, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.top_w = parent
         self.visible = visible
 
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
         hou_parm = self.top_w.exclude_layer_node.parm("layer_list")
 
@@ -1009,7 +1019,7 @@ class _LayerExcludeElement(QtGui.QWidget):
         self.radius_w.lbl.setStyleSheet("QLabel{background: transparent}")
         main_layout.addWidget(self.radius_w)
 
-        self.hide_btn = QtGui.QPushButton("")
+        self.hide_btn = QtWidgets.QPushButton("")
         self.hide_btn.setFixedSize(QtCore.QSize(28, 28))
         self.hide_btn.setIconSize(QtCore.QSize(24, 24))
         self.hide_btn.clicked.connect(self.switch_visible)
@@ -1019,7 +1029,7 @@ class _LayerExcludeElement(QtGui.QWidget):
             self.hide_btn.setIcon(get_icon("eye_close"))
         main_layout.addWidget(self.hide_btn)
 
-        self.delete_btn = QtGui.QPushButton()
+        self.delete_btn = QtWidgets.QPushButton()
         self.delete_btn.setFixedSize(QtCore.QSize(28, 28))
         self.delete_btn.setIconSize(QtCore.QSize(24, 24))
         self.delete_btn.setIcon(get_icon("close"))
@@ -1075,19 +1085,19 @@ class _LayerExcludeElement(QtGui.QWidget):
         layer_names = list(set(layer_names))
         self.top_w.refresh_layer_imports(layer_names)
 
-
-class InstancesListWidget(QtGui.QWidget):
+class InstancesListWidget(QtWidgets.QWidget):
 
     def __init__(self, layer_infos=None, parent=None):
         super(InstancesListWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.gaia_wac = None
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
         main_layout.setSpacing(5)
 
-        self.add_btn = QtGui.QPushButton("")
+        self.add_btn = QtWidgets.QPushButton("")
         self.add_btn.setIcon(get_icon("add"))
         self.add_btn.clicked.connect(self.add_item)
         main_layout.addWidget(self.add_btn)
@@ -1142,10 +1152,11 @@ class InstancesListWidget(QtGui.QWidget):
 
         self.list_widget.append_item(metadata)
 
-class InstanceItemsContainer(QtGui.QFrame):
+class InstanceItemsContainer(QtWidgets.QFrame):
 
     def __init__(self, node=None, parent=None):
         super(InstanceItemsContainer, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.influence_widgets = []
         self.assets_uids = []
@@ -1155,18 +1166,18 @@ class InstanceItemsContainer(QtGui.QFrame):
         self.top_w = parent
         self.setAcceptDrops(True)
         self.setMinimumHeight(85)
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum,
-                           QtGui.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
+                           QtWidgets.QSizePolicy.Minimum)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
-        self.nitems_lbl = QtGui.QLabel("0 Item(s)")
+        self.nitems_lbl = QtWidgets.QLabel("0 Item(s)")
         main_layout.addWidget(self.nitems_lbl)
 
-        self.scroll_w = QtGui.QWidget()
-        self.grid_layout = QtGui.QGridLayout()
+        self.scroll_w = QtWidgets.QWidget()
+        self.grid_layout = QtWidgets.QGridLayout()
         self.scroll_w.setLayout(self.grid_layout)
-        self.scroll_area = QtGui.QScrollArea()
+        self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_w)
 

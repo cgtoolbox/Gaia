@@ -3,12 +3,13 @@ import toolutils
 
 from functools import partial
 
-from PySide import QtGui
-from PySide import QtCore
+from PySide2 import QtWidgets
+from PySide2 import QtCore
+from PySide2 import QtGui
 
 from ..icons.icon import get_icon
 
-class HSlider(QtGui.QWidget):
+class HSlider(QtWidgets.QWidget):
     """ Custom widget which emulates the houdini float and int slider parameter.
         Can be either a float or an int slider. Has slider and numeric text fields.
         
@@ -32,7 +33,8 @@ class HSlider(QtGui.QWidget):
                  enable_checkbox=False, enable=True,
                  tooltip="", hou_parm=None, hou_checkbox=None, parent=None):
         super(HSlider, self).__init__(parent=parent)
-        
+        self.setProperty("houdiniStyle", True)
+
         self.hou_parm = hou_parm
         self.hou_checkbox = hou_checkbox
         
@@ -52,38 +54,38 @@ class HSlider(QtGui.QWidget):
         self.lock_min = lock_min
         self.lock_max = lock_max
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(5)
         layout.setAlignment(QtCore.Qt.AlignLeft)
 
         if enable_checkbox:
-            self.enable_checkbox = QtGui.QCheckBox(self)
+            self.enable_checkbox = QtWidgets.QCheckBox(self)
             self.enable_checkbox.setChecked(enable)
             self.enable_checkbox.clicked.connect(self._checkbox_sgn)
             layout.addWidget(self.enable_checkbox)
 
-        self.lbl = QtGui.QLabel(label + "  ")
+        self.lbl = QtWidgets.QLabel(label + "  ")
         self.lbl.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
         self.lbl.setEnabled(enable)
         layout.addWidget(self.lbl)
         
-        self.numeric = QtGui.QLineEdit(self)
+        self.numeric = QtWidgets.QLineEdit(self)
         self.numeric.setEnabled(enable)
         self.numeric.setText(str(default_value))
         self.numeric.returnPressed.connect(self._validate_numeric)
         self.numeric.setFixedWidth(50)
         layout.addWidget(self.numeric)
 
-        self.slider = QtGui.QSlider(self)
+        self.slider = QtWidgets.QSlider(self)
         self.slider.wheelEvent = self._wheel
         self.slider.setEnabled(enable)
         self.slider.setOrientation(QtCore.Qt.Horizontal)
         if self._type == "int":
-            self.numeric.setValidator(QtGui.QIntValidator())
+            #self.numeric.setValidator(QtGui.QIntValidator())
             self.slider.setRange(min, max)
             self.slider.setValue(default_value)
         else:
-            self.numeric.setValidator(QtGui.QDoubleValidator())
+            #self.numeric.setValidator(QtGui.QDoubleValidator())
             self.slider.setRange(min * 100.0, max * 100.0)
             self.slider.setValue(default_value * 100.0)
 
@@ -91,8 +93,8 @@ class HSlider(QtGui.QWidget):
         layout.addWidget(self.slider)
 
         self.setToolTip(tooltip)
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum,
-                           QtGui.QSizePolicy.Maximum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
+                           QtWidgets.QSizePolicy.Maximum)
         layout.setContentsMargins(0,0,0,0)
         self.setLayout(layout)
         self.setContentsMargins(0,0,0,0)
@@ -104,8 +106,20 @@ class HSlider(QtGui.QWidget):
     def _validate_numeric(self):
         
         val = self.numeric.text()
-        validator_result = self.numeric.validator().validate(val, 0)
-        if validator_result[0] != QtGui.QValidator.State.Acceptable:
+        validator_result = True
+        if self._type == "int":
+            try:
+                int(val)
+            except ValueError:
+                validator_result = False
+
+        if self._type == "float":
+            try:
+                float(val)
+            except ValueError:
+                validator_result = False
+        
+        if not validator_result:
             val = self._numeric_val
             self.numeric.setText(str(self._numeric_val))
             return
@@ -193,7 +207,7 @@ class HSlider(QtGui.QWidget):
             return float(val)
         return int(val)
 
-class HVector(QtGui.QWidget):
+class HVector(QtWidgets.QWidget):
 
     def __init__(self, label="", size=2, _type="float",
                        min=0.0, max=10.0, lock_min=True, lock_max=False,
@@ -201,11 +215,12 @@ class HVector(QtGui.QWidget):
                        default_value=[-180.0, 180.0],
                        tooltip="", hou_parm=None, hou_checkbox=None, parent=None):
         super(HVector, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.hou_parm = hou_parm
         self.hou_checkbox = hou_checkbox
 
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setSpacing(5)
         main_layout.setContentsMargins(0,0,0,0)
 
@@ -215,12 +230,12 @@ class HVector(QtGui.QWidget):
         self.default_value = default_value
 
         if enable_checkbox:
-            self.enable_checkbox = QtGui.QCheckBox(self)
+            self.enable_checkbox = QtWidgets.QCheckBox(self)
             self.enable_checkbox.setChecked(enable)
             self.enable_checkbox.clicked.connect(self._checkbox_sgn)
             main_layout.addWidget(self.enable_checkbox)
 
-        self.lbl = QtGui.QLabel(label)
+        self.lbl = QtWidgets.QLabel(label)
         self.lbl.setEnabled(enable)
         main_layout.addWidget(self.lbl)
 
@@ -237,11 +252,11 @@ class HVector(QtGui.QWidget):
             else:
                 dval = float(dval)
 
-            w = QtGui.QLineEdit(self)
-            if _type == "int":
-                w.setValidator(QtGui.QIntValidator())
-            else:
-                w.setValidator(QtGui.QDoubleValidator())
+            w = QtWidgets.QLineEdit(self)
+            #if _type == "int":
+            #    w.setValidator(QtGui.QIntValidator())
+            #else:
+            #    w.setValidator(QtGui.QDoubleValidator())
             w.setObjectName("vid_" + str(i))
             w.returnPressed.connect(partial(self._validate_numeric, i))
             w.setEnabled(enable)
@@ -280,22 +295,23 @@ class HVector(QtGui.QWidget):
             return [int(i.text()) for i in self.vector_widgets]
         return [float(i.text()) for i in self.vector_widgets]
 
-class HLabeledCheckbox(QtGui.QWidget):
+class HLabeledCheckbox(QtWidgets.QWidget):
 
     clicked = QtCore.Signal()
 
     def __init__(self, label="", default_state=True, parent=None):
         super(HLabeledCheckbox, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setContentsMargins(0,0,0,0)
 
-        self.checkbox = QtGui.QCheckBox()
+        self.checkbox = QtWidgets.QCheckBox()
         self.checkbox.setChecked(default_state)
         self.checkbox.clicked.connect(self.__clicked)
         main_layout.addWidget(self.checkbox)
 
-        self.label = QtGui.QLabel(label)
+        self.label = QtWidgets.QLabel(label)
         main_layout.addWidget(self.label)
 
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -316,13 +332,14 @@ class HLabeledCheckbox(QtGui.QWidget):
         self.label.setEnabled(state)
         self.clicked.emit()
 
-class InstanceModelWidget(QtGui.QWidget):
+class InstanceModelWidget(QtWidgets.QWidget):
 
     def __init__(self, path="", influence=50.0, idx=0, gaia_node=None,
                  parent=None):
         super(InstanceModelWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(5)
 
         self.gaia_node = gaia_node
@@ -330,7 +347,7 @@ class InstanceModelWidget(QtGui.QWidget):
         name = path.split('/')[-1]  # placeholder, should be a parameter
         model_ix = 0  # placeholder, will be a unique ID in the collection
 
-        self.name = QtGui.QLabel(name)
+        self.name = QtWidgets.QLabel(name)
         main_layout.addWidget(self.name)
 
         self.influence = InfluenceBarWidget(value=influence, idx=idx,
@@ -344,8 +361,8 @@ class InstanceModelWidget(QtGui.QWidget):
         
         self.gaia_node.parm("influence_" + str(idx)).set(value)
 
-class HStringValue(QtGui.QWidget):
-
+class HStringValue(QtWidgets.QWidget):
+    
     value_changed = QtCore.Signal(str)
 
     def __init__(self, default="", label="",
@@ -354,8 +371,9 @@ class HStringValue(QtGui.QWidget):
                  hou_parm=None, hou_checkbox=None, read_only=False,
                  parent=None):
         super(HStringValue, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
         
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
         main_layout.setSpacing(5)
 
@@ -369,17 +387,17 @@ class HStringValue(QtGui.QWidget):
         self.append_value = append_value
 
         if enable_checkbox:
-            self.enable_checkbox = QtGui.QCheckBox()
+            self.enable_checkbox = QtWidgets.QCheckBox()
             self.enable_checkbox.setChecked(enable)
             self.enable_checkbox.clicked.connect(self.toggle_enable)
             main_layout.addWidget(self.enable_checkbox)
 
         if label:
-            self.lbl = QtGui.QLabel(label)
+            self.lbl = QtWidgets.QLabel(label)
             self.lbl.setEnabled(enable)
             main_layout.addWidget(self.lbl)
 
-        self.string_input = QtGui.QLineEdit()
+        self.string_input = QtWidgets.QLineEdit()
         self.string_input.setReadOnly(read_only)
         self.string_input.returnPressed.connect(self.valid)
         self.string_input.setText(default)
@@ -387,7 +405,7 @@ class HStringValue(QtGui.QWidget):
         main_layout.addWidget(self.string_input)
 
         if self.pick_list_callback and self.hou_parm:
-            self.pick_btn = QtGui.QPushButton("")
+            self.pick_btn = QtWidgets.QPushButton("")
             self.pick_btn.setIcon(get_icon("convert_to_solid"))
             self.pick_btn.clicked.connect(self.pick)
             self.pick_btn.setIconSize(QtCore.QSize(24, 24))
@@ -458,25 +476,25 @@ class HStringValue(QtGui.QWidget):
         self.hou_parm.set(value)
         self.value_changed.emit(value)
 
-class CollapsableWidget(QtGui.QWidget):
+class CollapsableWidget(QtWidgets.QWidget):
     """ Custom widget which makes a given widget "collapsable" (hidden/shown)
         using a simple custom push button.
     """
     def __init__(self, widget=None, label="",
                  color="", collapsed=False, parent=None):
-
         super(CollapsableWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.collapsed = collapsed
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         self.setContentsMargins(0,0,0,0)
-        self.collapse_btn = QtGui.QPushButton(label)
+        self.collapse_btn = QtWidgets.QPushButton(label)
         self.collapse_btn.setContentsMargins(0,0,0,0)
         self.collapse_btn.clicked.connect(self.collapse)
         self.collapse_btn.setFixedHeight(20)
-        self.collapse_btn.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
-                                        QtGui.QSizePolicy.Maximum)
+        self.collapse_btn.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
+                                        QtWidgets.QSizePolicy.Maximum)
 
         if color == "red":
             color = "rgb(120, 60, 60)"
@@ -526,38 +544,39 @@ class CollapsableWidget(QtGui.QWidget):
             self.collapsed = True
             self.collapse_btn.setIcon(get_icon("collapse_up"))
 
-class PickLayerTypeWidget(QtGui.QDialog):
+class PickLayerTypeWidget(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(PickLayerTypeWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.setWindowTitle("Create a new layer")
 
         self.layer_type = None
         self.layer_name = ""
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(5)
 
-        name_layout = QtGui.QHBoxLayout()
-        name_layout.addWidget(QtGui.QLabel("Layer Name:"))
-        self.name_input = QtGui.QLineEdit()
+        name_layout = QtWidgets.QHBoxLayout()
+        name_layout.addWidget(QtWidgets.QLabel("Layer Name:"))
+        self.name_input = QtWidgets.QLineEdit()
         name_layout.addWidget(self.name_input)
         main_layout.addItem(name_layout)
 
-        self.paint_btn = QtGui.QPushButton("Create Paint Layer")
+        self.paint_btn = QtWidgets.QPushButton("Create Paint Layer")
         self.paint_btn.setIcon(get_icon("brush"))
         self.paint_btn.clicked.connect(lambda: self.create_layer("paint"))
         main_layout.addWidget(self.paint_btn)
 
-        self.fill_btn = QtGui.QPushButton("Create Fill Layer")
+        self.fill_btn = QtWidgets.QPushButton("Create Fill Layer")
         self.fill_btn.setIcon(get_icon("fill"))
         self.fill_btn.clicked.connect(lambda: self.create_layer("fill"))
         main_layout.addWidget(self.fill_btn)
 
-        main_layout.addWidget(QtGui.QLabel(""))
+        main_layout.addWidget(QtWidgets.QLabel(""))
 
-        self.cancel_btn = QtGui.QPushButton("Cancel")
+        self.cancel_btn = QtWidgets.QPushButton("Cancel")
         self.cancel_btn.clicked.connect(self.close)
         main_layout.addWidget(self.cancel_btn)
 
@@ -575,44 +594,45 @@ class PickLayerTypeWidget(QtGui.QDialog):
         self.layer_name = n
         self.close()
 
-class AttribRuleWidget(QtGui.QWidget):
+class AttribRuleWidget(QtWidgets.QWidget):
     """ Define a min-max rule widget from a given normalized attributes
         Must be link to a given Gaia_Apply_Rule node in order to delete the points.
     """
     def __init__(self, rule_node=None, default=[0.0, 1.0],
                  label="", tooltip="", parent=None):
         super(AttribRuleWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         assert (type(rule_node) == hou.SopNode or \
                 rule_node.type().name() == "rule_node"), \
                 "Invalud arg type: rule_node"
 
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setSpacing(5)
 
         self.enable = rule_node.evalParm("enable")
         self.rule_node = rule_node  # vex wrangle node wrapped in an hda
 
-        self.enable_checkbox = QtGui.QCheckBox()
+        self.enable_checkbox = QtWidgets.QCheckBox()
         self.enable_checkbox.setChecked(self.enable)
         self.enable_checkbox.clicked.connect(self.toggle_enable)
         main_layout.addWidget(self.enable_checkbox)
 
-        self.label = QtGui.QLabel(label)
+        self.label = QtWidgets.QLabel(label)
         self.label.setEnabled(self.enable)
         main_layout.addWidget(self.label)
 
-        self.min = QtGui.QLineEdit("")
+        self.min = QtWidgets.QLineEdit("")
         self.min.setEnabled(self.enable)
         self.min.setText(str(default[0]))
-        self.min.setValidator(QtGui.QDoubleValidator(0.0, 1.0, 10))
+        #self.min.setValidator(QtGui.QDoubleValidator(0.0, 1.0, 10))
         self.min.returnPressed.connect(self.update_node)
         main_layout.addWidget(self.min)
 
-        self.max = QtGui.QLineEdit("")
+        self.max = QtWidgets.QLineEdit("")
         self.max.setEnabled(self.enable)
         self.max.setText(str(default[1]))
-        self.max.setValidator(QtGui.QDoubleValidator(0.0, 1.0, 10))
+        #self.max.setValidator(QtGui.QDoubleValidator(0.0, 1.0, 10))
         self.max.returnPressed.connect(self.update_node)
         main_layout.addWidget(self.max)
 

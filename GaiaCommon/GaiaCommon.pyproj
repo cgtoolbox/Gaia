@@ -13,6 +13,8 @@
     <OutputPath>.</OutputPath>
     <Name>GaiaCommon</Name>
     <RootNamespace>GaiaCommon</RootNamespace>
+    <InterpreterId>{a7e3a1eb-5ab6-4f1e-8fe1-b73cebc0fced}</InterpreterId>
+    <InterpreterVersion>2.7</InterpreterVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,6 +32,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="icons\" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{a7e3a1eb-5ab6-4f1e-8fe1-b73cebc0fced}\2.7" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

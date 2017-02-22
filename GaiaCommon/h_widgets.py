@@ -3,12 +3,13 @@ import toolutils
 
 from functools import partial
 
-from PySide import QtGui
-from PySide import QtCore
+from PySide2 import QtGui
+from PySide2 import QtWidgets
+from PySide2 import QtCore
 
 from .icons.icon import get_icon
 
-class HSlider(QtGui.QWidget):
+class HSlider(QtWidgets.QWidget):
     """ Custom widget which emulates the houdini float and int slider parameter.
         Can be either a float or an int slider. Has slider and numeric text fields.
         
@@ -31,7 +32,8 @@ class HSlider(QtGui.QWidget):
                  enable_checkbox=False, enable=True,
                  tooltip="", hou_parm=None, hou_checkbox=None, parent=None):
         super(HSlider, self).__init__(parent=parent)
-        
+        self.setProperty("houdiniStyle", True)
+
         self.hou_parm = hou_parm
         self.hou_checkbox = hou_checkbox
         
@@ -51,38 +53,36 @@ class HSlider(QtGui.QWidget):
         self.lock_min = lock_min
         self.lock_max = lock_max
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(5)
         layout.setAlignment(QtCore.Qt.AlignLeft)
 
         if enable_checkbox:
-            self.enable_checkbox = QtGui.QCheckBox(self)
+            self.enable_checkbox = QtWidgets.QCheckBox(self)
             self.enable_checkbox.setChecked(enable)
             self.enable_checkbox.clicked.connect(self._checkbox_sgn)
             layout.addWidget(self.enable_checkbox)
 
-        self.lbl = QtGui.QLabel(label + "  ")
+        self.lbl = QtWidgets.QLabel(label + "  ")
         self.lbl.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
         self.lbl.setEnabled(enable)
         layout.addWidget(self.lbl)
         
-        self.numeric = QtGui.QLineEdit(self)
+        self.numeric = QtWidgets.QLineEdit(self)
         self.numeric.setEnabled(enable)
         self.numeric.setText(str(default_value))
         self.numeric.returnPressed.connect(self._validate_numeric)
         self.numeric.setFixedWidth(50)
         layout.addWidget(self.numeric)
 
-        self.slider = QtGui.QSlider(self)
+        self.slider = QtWidgets.QSlider(self)
         self.slider.wheelEvent = self._wheel
         self.slider.setEnabled(enable)
         self.slider.setOrientation(QtCore.Qt.Horizontal)
         if self._type == "int":
-            self.numeric.setValidator(QtGui.QIntValidator())
             self.slider.setRange(min, max)
             self.slider.setValue(default_value)
         else:
-            self.numeric.setValidator(QtGui.QDoubleValidator())
             self.slider.setRange(min * 100.0, max * 100.0)
             self.slider.setValue(default_value * 100.0)
 
@@ -90,8 +90,8 @@ class HSlider(QtGui.QWidget):
         layout.addWidget(self.slider)
 
         self.setToolTip(tooltip)
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum,
-                           QtGui.QSizePolicy.Maximum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
+                           QtWidgets.QSizePolicy.Maximum)
         layout.setContentsMargins(0,0,0,0)
         self.setLayout(layout)
         self.setContentsMargins(0,0,0,0)
@@ -103,16 +103,15 @@ class HSlider(QtGui.QWidget):
     def _validate_numeric(self):
         
         val = self.numeric.text()
-        validator_result = self.numeric.validator().validate(val, 0)
-        if validator_result[0] != QtGui.QValidator.State.Acceptable:
+        try:
+            if self._type == "int":
+                val = int(val)
+            else:
+                val = float(val)
+        except ValueError:
             val = self._numeric_val
             self.numeric.setText(str(self._numeric_val))
             return
-
-        if self._type == "int":
-            val = int(val)
-        else:
-            val = float(val)
             
         self._numeric_val = val
         slider_val = val
@@ -192,7 +191,7 @@ class HSlider(QtGui.QWidget):
             return float(val)
         return int(val)
 
-class HVector(QtGui.QWidget):
+class HVector(QtWidgets.QWidget):
 
     def __init__(self, label="", size=2, _type="float",
                        min=0.0, max=10.0, lock_min=True, lock_max=False,
@@ -200,11 +199,12 @@ class HVector(QtGui.QWidget):
                        default_value=[-180.0, 180.0],
                        tooltip="", hou_parm=None, hou_checkbox=None, parent=None):
         super(HVector, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.hou_parm = hou_parm
         self.hou_checkbox = hou_checkbox
 
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setSpacing(5)
         main_layout.setContentsMargins(0,0,0,0)
 
@@ -214,12 +214,12 @@ class HVector(QtGui.QWidget):
         self.default_value = default_value
 
         if enable_checkbox:
-            self.enable_checkbox = QtGui.QCheckBox(self)
+            self.enable_checkbox = QtWidgets.QCheckBox(self)
             self.enable_checkbox.setChecked(enable)
             self.enable_checkbox.clicked.connect(self._checkbox_sgn)
             main_layout.addWidget(self.enable_checkbox)
 
-        self.lbl = QtGui.QLabel(label)
+        self.lbl = QtWidgets.QLabel(label)
         self.lbl.setEnabled(enable)
         main_layout.addWidget(self.lbl)
 
@@ -236,11 +236,7 @@ class HVector(QtGui.QWidget):
             else:
                 dval = float(dval)
 
-            w = QtGui.QLineEdit(self)
-            if _type == "int":
-                w.setValidator(QtGui.QIntValidator())
-            else:
-                w.setValidator(QtGui.QDoubleValidator())
+            w = QtWidgets.QLineEdit(self)
             w.setObjectName("vid_" + str(i))
             w.returnPressed.connect(partial(self._validate_numeric, i))
             w.setEnabled(enable)
@@ -279,7 +275,7 @@ class HVector(QtGui.QWidget):
             return [int(i.text()) for i in self.vector_widgets]
         return [float(i.text()) for i in self.vector_widgets]
 
-class HStringValue(QtGui.QWidget):
+class HStringValue(QtWidgets.QWidget):
 
     def __init__(self, default="", label="",
                  pick_list_callback=None, multiple_values=False,
@@ -287,8 +283,9 @@ class HStringValue(QtGui.QWidget):
                  hou_parm=None, hou_checkbox=None,
                  parent=None):
         super(HStringValue, self).__init__(parent=parent)
-        
-        main_layout = QtGui.QHBoxLayout()
+        self.setProperty("houdiniStyle", True)
+
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
         main_layout.setSpacing(5)
 
@@ -301,24 +298,24 @@ class HStringValue(QtGui.QWidget):
         self.multiple_values = multiple_values
 
         if enable_checkbox:
-            self.enable_checkbox = QtGui.QCheckBox()
+            self.enable_checkbox = QtWidgets.QCheckBox()
             self.enable_checkbox.setChecked(enable)
             self.enable_checkbox.clicked.connect(self.toggle_enable)
             main_layout.addWidget(self.enable_checkbox)
 
         if label:
-            self.lbl = QtGui.QLabel(label)
+            self.lbl = QtWidgets.QLabel(label)
             self.lbl.setEnabled(enable)
             main_layout.addWidget(self.lbl)
 
-        self.string_input = QtGui.QLineEdit()
+        self.string_input = QtWidgets.QLineEdit()
         self.string_input.returnPressed.connect(self.valid)
         self.string_input.setText(default)
         self.string_input.setEnabled(enable)
         main_layout.addWidget(self.string_input)
 
         if self.pick_list_callback and self.hou_parm:
-            self.pick_btn = QtGui.QPushButton("")
+            self.pick_btn = QtWidgets.QPushButton("")
             self.pick_btn.setIcon(get_icon("convert_to_solid"))
             self.pick_btn.clicked.connect(self.pick)
             self.pick_btn.setIconSize(QtCore.QSize(24, 24))
@@ -374,14 +371,15 @@ class HStringValue(QtGui.QWidget):
         self.string_input.setText(value)
         self.hou_parm.set(value)
 
-class HSeparator(QtGui.QFrame):
+class HSeparator(QtWidgets.QFrame):
 
     def __init__(self, mode="horizontal", parent=None):
         super(HSeparator, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         if mode == "horizontal":
-            self.setFrameShape(QtGui.QFrame.HLine)
+            self.setFrameShape(QtWidgets.QFrame.HLine)
         else:
-            self.setFrameShape(QtGui.QFrame.VLine)
+            self.setFrameShape(QtWidgets.QFrame.VLine)
 
-        self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)

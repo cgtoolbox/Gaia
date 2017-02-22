@@ -1,7 +1,8 @@
 import hou
 
-from PySide import QtGui
-from PySide import QtCore
+from PySide2 import QtWidgets
+from PySide2 import QtCore
+from PySide2 import QtGui
 
 from GaiaCommon import h_widgets
 
@@ -15,15 +16,16 @@ reload(paint)
 
 PAINTMODES = paint.PAINTMODES
 
-class StrokesWidget(QtGui.QWidget):
+class StrokesWidget(QtWidgets.QWidget):
     """ Bottom part
     """
     def __init__(self, layer_infos=None, paint=True, scale=True, eraser=True, parent=None):
         super(StrokesWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.layer_infos = layer_infos
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(5)
         main_layout.setAlignment(QtCore.Qt.AlignLeft)
 
@@ -33,12 +35,12 @@ class StrokesWidget(QtGui.QWidget):
         self.scale_displayed = scale
         
         # toolbar (paint mode buttons)
-        toolbar_layout = QtGui.QHBoxLayout()
+        toolbar_layout = QtWidgets.QHBoxLayout()
         toolbar_layout.setSpacing(5)
         toolbar_layout.setAlignment(QtCore.Qt.AlignLeft)
 
         if self.paint_displayed:
-            self.paint_stroke_btn = QtGui.QPushButton("")
+            self.paint_stroke_btn = QtWidgets.QPushButton("")
             self.paint_stroke_btn.setCheckable(True)
             self.paint_stroke_btn.setIcon(get_icon("brush"))
             self.paint_stroke_btn.setToolTip("Paint instances")
@@ -47,7 +49,7 @@ class StrokesWidget(QtGui.QWidget):
             toolbar_layout.addWidget(self.paint_stroke_btn)
 
         if self.eraser_displayed :
-            self.eraser_stroke_btn = QtGui.QPushButton("")
+            self.eraser_stroke_btn = QtWidgets.QPushButton("")
             self.eraser_stroke_btn.setCheckable(True)
             self.eraser_stroke_btn.setIcon(get_icon("eraser"))
             self.eraser_stroke_btn.setToolTip("Erase instances")
@@ -56,7 +58,7 @@ class StrokesWidget(QtGui.QWidget):
             toolbar_layout.addWidget(self.eraser_stroke_btn)
 
         if self.scale_displayed:
-            self.scale_stroke_btn = QtGui.QPushButton("")
+            self.scale_stroke_btn = QtWidgets.QPushButton("")
             self.scale_stroke_btn.setCheckable(True)
             self.scale_stroke_btn.setIcon(get_icon("paint_scale"))
             self.scale_stroke_btn.setToolTip("Pain instances scale")
@@ -159,25 +161,25 @@ class StrokesWidget(QtGui.QWidget):
             self.painted_scale_value.hou_parm = None
             paint.exit_paint_mode()
 
-
-class StrokesList(QtGui.QWidget):
+class StrokesList(QtWidgets.QWidget):
     """ Widget which will store strokes group widget (created when the user enter
         in a paint mode).
     """
     def __init__(self, gaia_layer_node=None, parent=None):
         super(StrokesList, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
 
         self.strokes = []
         self.gaia_layer_node = gaia_layer_node
 
-        scroll = QtGui.QScrollArea()
+        scroll = QtWidgets.QScrollArea()
         scroll.setStyleSheet("""QScrollArea{border:0px}""")
         scroll.setContentsMargins(0,0,0,0)
         scroll.setWidgetResizable(True)
-        scroll_widget = QtGui.QWidget()
-        self.scroll_layout = QtGui.QVBoxLayout()
+        scroll_widget = QtWidgets.QWidget()
+        self.scroll_layout = QtWidgets.QVBoxLayout()
         self.scroll_layout.setAlignment(QtCore.Qt.AlignTop)
         self.scroll_layout.setContentsMargins(3,3,3,3)
 
@@ -255,7 +257,7 @@ class StrokesList(QtGui.QWidget):
         w.setParent(None)
         w.deleteLater()
 
-class _BaseStroke(QtGui.QWidget):
+class _BaseStroke(QtWidgets.QWidget):
 
     def __init__(self, strokes_list=None, parent=None):
         super(_BaseStroke, self).__init__(parent=parent)
@@ -268,7 +270,7 @@ class _BaseStroke(QtGui.QWidget):
         self.set_type()
 
         self.setObjectName("paint_stroke")
-        main_layout = QtGui.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout()
         main_layout.setSpacing(10)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         self.setFixedHeight(40)
@@ -279,18 +281,18 @@ class _BaseStroke(QtGui.QWidget):
         p.setColor(self.backgroundRole(), self.bg_color)
         self.setPalette(p)
 
-        self.lbl_ico = QtGui.QLabel("")
+        self.lbl_ico = QtWidgets.QLabel("")
         self.lbl_ico.setFixedHeight(22)
         self.lbl_ico.setFixedWidth(22)
         self.lbl_ico.setPixmap(get_icon(self.icon_name).pixmap(22, 22))
         self.lbl_ico.setStyleSheet("QLabel{background:transparent;}")
         main_layout.addWidget(self.lbl_ico)
 
-        lbl = QtGui.QLabel(self.lbl_value)
+        lbl = QtWidgets.QLabel(self.lbl_value)
         lbl.setStyleSheet("QLabel{background:transparent;}")
         main_layout.addWidget(lbl)
         
-        self.hide_stroke_btn = QtGui.QPushButton("")
+        self.hide_stroke_btn = QtWidgets.QPushButton("")
         self.hide_stroke_btn.setIcon(get_icon("eye_open"))
         self.hide_stroke_btn.setToolTip("Hide / Show strokes group")
         self.hide_stroke_btn.setIconSize(QtCore.QSize(18, 18))
@@ -299,7 +301,7 @@ class _BaseStroke(QtGui.QWidget):
         self.hide_stroke_btn.clicked.connect(self.switch_enable)
         main_layout.addWidget(self.hide_stroke_btn)
 
-        self.delete_stroke_btn = QtGui.QPushButton("")
+        self.delete_stroke_btn = QtWidgets.QPushButton("")
         self.delete_stroke_btn.setIcon(get_icon("trash_can"))
         self.delete_stroke_btn.setToolTip("Delete strokes group")
         self.delete_stroke_btn.setIconSize(QtCore.QSize(18, 18))

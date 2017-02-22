@@ -1,7 +1,7 @@
 import os
 import json
 import time
-from PySide import QtCore
+from PySide2 import QtCore
 
 class GetCollectionItems(QtCore.QObject):
 

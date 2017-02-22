@@ -3,8 +3,9 @@ import sys
 import os
 import tempfile
 
-from PySide import QtGui
-from PySide import QtCore
+from PySide2 import QtWidgets
+from PySide2 import QtCore
+from PySide2 import QtGui
 import toolutils
 
 from ..icons.icon import get_icon
@@ -13,7 +14,7 @@ from GaiaCommon import nodeInfos
 from . import widgets
 reload(widgets)
 
-class CollectionInstanceWidget(QtGui.QWidget):
+class CollectionInstanceWidget(QtWidgets.QWidget):
     """ Widget used in the layer widget, when object are dropped from the collection
         to the scatter tool.
     """
@@ -21,6 +22,7 @@ class CollectionInstanceWidget(QtGui.QWidget):
                  set_parms=True, parent=None):
 
         super(CollectionInstanceWidget, self).__init__(parent=parent)
+        self.setProperty("houdiniStyle", True)
 
         self.setToolTip(unicode(item_infos.tooltip))
         self.setAcceptDrops(True)
@@ -49,17 +51,20 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.displayed = item_infos.visible
         self.display_mode = item_infos.display_mode
 
-        self.main_layout = QtGui.QVBoxLayout()
+        self.main_layout = QtWidgets.QVBoxLayout()
         self.main_layout.setAlignment(QtCore.Qt.AlignTop)
         self.main_layout.setContentsMargins(0,0,0,0)
         self.main_layout.setSpacing(0)
 
-        self.btn_layout = QtGui.QHBoxLayout()
+        self.btn_layout = QtWidgets.QHBoxLayout()
         self.btn_layout.setContentsMargins(0,0,0,0)
         self.btn_layout.setSpacing(10)
         self.btn_layout.setAlignment(QtCore.Qt.AlignLeft)
 
-        self.show_toggle_btn = QtGui.QPushButton("")
+        self.button_layout_widget = QtWidgets.QWidget()
+        self.button_layout_widget.setStyleSheet("""QWidget:hover{background-color:rgba(200,200,255,100)}""")
+
+        self.show_toggle_btn = QtWidgets.QPushButton("")
         self.show_toggle_btn.setToolTip("Hide / Show object")
         if self.displayed:
             self.show_toggle_btn.setIcon(get_icon("eye_open"))
@@ -71,7 +76,7 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.show_toggle_btn.clicked.connect(self.show_object)
         self.btn_layout.addWidget(self.show_toggle_btn)
 
-        self.display_mode_btn = QtGui.QPushButton("")
+        self.display_mode_btn = QtWidgets.QPushButton("")
         if self.display_mode == 0:
             self.display_mode_btn.setIcon(get_icon("tree"))
         elif self.display_mode == 1:
@@ -84,19 +89,19 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.display_mode_btn.clicked.connect(self.change_display_mode)
         self.btn_layout.addWidget(self.display_mode_btn)
 
-        self.displayModeMenu = QtGui.QMenu(self)
+        self.displayModeMenu = QtWidgets.QMenu(self)
 
-        full_geo = QtGui.QAction(get_icon("tree"), " Full Geometry", self)
+        full_geo = QtWidgets.QAction(get_icon("tree"), " Full Geometry", self)
         full_geo.triggered.connect(lambda: self.set_display_mode(0))
         self.displayModeMenu.addAction(full_geo)
-        boudning_box = QtGui.QAction(get_icon("cube"), " Bounding Box", self)
+        boudning_box = QtWidgets.QAction(get_icon("cube"), " Bounding Box", self)
         boudning_box.triggered.connect(lambda: self.set_display_mode(2))
         self.displayModeMenu.addAction(boudning_box)
-        pt_cloud = QtGui.QAction(get_icon("diffusion"), " Points Coud", self)
+        pt_cloud = QtWidgets.QAction(get_icon("diffusion"), " Points Coud", self)
         pt_cloud.triggered.connect(lambda: self.set_display_mode(1))
         self.displayModeMenu.addAction(pt_cloud)
 
-        self.delete_btn = QtGui.QPushButton("")
+        self.delete_btn = QtWidgets.QPushButton("")
         self.delete_btn.setIcon(get_icon("close"))
         self.delete_btn.setFixedWidth(22)
         self.delete_btn.setFixedHeight(22)
@@ -104,9 +109,10 @@ class CollectionInstanceWidget(QtGui.QWidget):
         self.delete_btn.clicked.connect(self.remove_item)
         self.btn_layout.addWidget(self.delete_btn)
         
-        self.main_layout.addItem(self.btn_layout)
+        self.button_layout_widget.setLayout(self.btn_layout)
+        self.main_layout.addWidget(self.button_layout_widget)
 
-        self.thumbnail = QtGui.QLabel()
+        self.thumbnail = QtWidgets.QLabel()
         self.thumbnail.setFixedWidth(90)
         self.thumbnail.setFixedHeight(90)
         self.pixmap = QtGui.QPixmap()
@@ -202,15 +208,15 @@ class CollectionInstanceWidget(QtGui.QWidget):
         except SyntaxError:
             print("Error: bad formating metadata")
 
-class InfluenceBarWidget(QtGui.QWidget):
+class InfluenceBarWidget(QtWidgets.QWidget):
     """ Special custom slider used in the collection thumbnail widget
         to set the influence of the given props in the instance scattering
     """
     def __init__(self, value=50.0, w=91, h=15, idx=0, callback=None, parent=None):
-        
         super(InfluenceBarWidget, self).__init__(parent=parent)
-        
-        self.main_layout = QtGui.QHBoxLayout()
+        self.setProperty("houdiniStyle", True)
+
+        self.main_layout = QtWidgets.QHBoxLayout()
 
         self.callback = callback
         self.idx = idx
@@ -226,7 +232,7 @@ class InfluenceBarWidget(QtGui.QWidget):
         self.setFixedWidth(w)
         self.setFixedHeight(h)
         
-        self.slider = QtGui.QSlider()
+        self.slider = QtWidgets.QSlider()
         self.slider.setMinimum(0)
         self.slider.setMaximum(100)
         self.slider.setValue(value)
@@ -238,14 +244,14 @@ class InfluenceBarWidget(QtGui.QWidget):
         self.slider.setContentsMargins(0, 0, 0, 0)
         self.main_layout.addWidget(self.slider)
 
-        self.numeric_input = QtGui.QSpinBox()
+        self.numeric_input = QtWidgets.QSpinBox()
         self.numeric_input.setFixedWidth(25)
         self.numeric_input.setFixedHeight(h)
         self.numeric_input.setMinimum(0)
         self.numeric_input.setMaximum(100)
         self.numeric_input.setValue(value)
         self.numeric_input.setStyleSheet(self._numeric_input_stylesheet())
-        nb = QtGui.QAbstractSpinBox.ButtonSymbols.NoButtons
+        nb = QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons
         self.numeric_input.setButtonSymbols(nb)
         self.numeric_input.setContentsMargins(0, 0, 0, 0)
         self.numeric_input.valueChanged.connect(self._update_from_numeric)

@@ -1,6 +1,6 @@
 import os
 
-from PySide import QtGui
+from PySide2 import QtGui
 
 def get_icon(name, size=32):
     """ Return a given QIcon object according to a icon name

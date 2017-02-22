@@ -9,8 +9,9 @@ import datetime
 import getpass
 import hashlib
 
-from PySide import QtGui
-from PySide import QtCore
+from PySide2 import QtGui
+from PySide2 import QtCore
+from PySide2 import QtWidgets
 import toolutils
 
 from ..icons.icon import get_icon
@@ -23,12 +24,17 @@ reload(h_widgets)
 global FROM_GAIA_SCATTER
 FROM_GAIA_SCATTER = False
 
-class CollectionWidget(QtGui.QFrame):
+class CollectionWidget(QtWidgets.QFrame):
 
     def __init__(self, from_gaia_scatter=False, parent=None):
         super(CollectionWidget, self).__init__(parent, QtCore.Qt.WindowStaysOnTopHint)
 
         self.setWindowTitle("Gaia Collection")
+        self.setProperty("houdiniStyle", True)
+
+        self.assets_grid = None
+        self.asset_properties = None
+        self.toolbar = None
 
         global FROM_GAIA_SCATTER
         FROM_GAIA_SCATTER = from_gaia_scatter
@@ -39,12 +45,12 @@ class CollectionWidget(QtGui.QFrame):
         self.categories = []
         self.init_collection_folders()
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         main_layout.setContentsMargins(0,0,0,0)
 
         # middle layout
-        middle_layout = QtGui.QHBoxLayout()
+        middle_layout = QtWidgets.QHBoxLayout()
         middle_layout.setSpacing(5)
         middle_layout.setAlignment(QtCore.Qt.AlignLeft)
         middle_layout.setContentsMargins(5,5,5,5)
@@ -76,18 +82,20 @@ class CollectionWidget(QtGui.QFrame):
             self.categories.append(f)
             p = self.collection_root + os.sep + f  
 
-class CollectionToolbar(QtGui.QWidget):
+class CollectionToolbar(QtWidgets.QWidget):
     """ Top toolbar of the collection widget
     """
     def __init__(self, parent=None):
         super(CollectionToolbar, self).__init__(parent=parent)
 
-        layout = QtGui.QHBoxLayout()
+        self.setProperty("houdiniStyle", True)
+
+        layout = QtWidgets.QHBoxLayout()
         layout.setAlignment(QtCore.Qt.AlignLeft)
         self.assets_grid = parent.assets_grid
         self.collection_menu = parent.collection_menu
 
-        self.add_asset_btn = QtGui.QPushButton("")
+        self.add_asset_btn = QtWidgets.QPushButton("")
         self.add_asset_btn.setFixedHeight(32)
         self.add_asset_btn.setFixedWidth(32)
         self.add_asset_btn.setIcon(get_icon("add"))
@@ -128,7 +136,7 @@ class CollectionToolbar(QtGui.QWidget):
         self.w.setStyleSheet(hou.ui.qtStyleSheet())
         self.w.show()
 
-class CollectionIconProvider(QtGui.QFileIconProvider):
+class CollectionIconProvider(QtWidgets.QFileIconProvider):
 
     def __init__(self):
         super(CollectionIconProvider, self).__init__(self)
@@ -138,10 +146,12 @@ class CollectionIconProvider(QtGui.QFileIconProvider):
 
         return get_icon("database")
 
-class CollectionGrid(QtGui.QFrame):
+class CollectionGrid(QtWidgets.QFrame):
 
     def __init__(self, collection_root, parent=None):
         super(CollectionGrid, self).__init__(parent=parent)
+
+        self.setProperty("houdiniStyle", True)
 
         self.collection_items = []
         self.selected_item = None
@@ -159,22 +169,23 @@ class CollectionGrid(QtGui.QFrame):
 
         self.setObjectName("grid")
         self.setFixedWidth(415)
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
-        self.setSizePolicy(QtGui.QSizePolicy.Minimum,
-                           QtGui.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
+                           QtWidgets.QSizePolicy.Minimum)
 
-        self.items_loading_progress = QtGui.QProgressBar()
+        self.items_loading_progress = QtWidgets.QProgressBar()
         self.items_loading_progress.setFixedHeight(5)
         self.items_loading_progress.setTextVisible(False)
         main_layout.addWidget(self.items_loading_progress)
 
         self.setStyleSheet("""QFrame#grid{border: 1px solid black}""")
 
-        self.scrollarea = QtGui.QScrollArea()
+        self.scrollarea = QtWidgets.QScrollArea()
+        self.scrollarea.setStyleSheet("""QScrollArea{background-color: transparent}""")
         self.scrollarea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.scroll_widget = QtGui.QWidget()
-        self.asset_grid_layout = QtGui.QGridLayout()
+        self.scroll_widget = QtWidgets.QWidget()
+        self.asset_grid_layout = QtWidgets.QGridLayout()
         self.asset_grid_layout.setAlignment(QtCore.Qt.AlignTop)
         self.scroll_widget.setLayout(self.asset_grid_layout)
         self.scrollarea.setWidgetResizable(True)
@@ -247,11 +258,13 @@ class CollectionGrid(QtGui.QFrame):
         self.selected_item = None
         self.item_properties.reset()
 
-class CollectionMenu(QtGui.QTreeView):
+class CollectionMenu(QtWidgets.QTreeView):
     """ Left side menu to navigate throught the collection
     """
     def __init__(self, collection_root="", parent=None):
         super(CollectionMenu, self).__init__(parent=parent)
+
+        self.setProperty("houdiniStyle", True)
 
         self.collection = parent
         self.setFixedWidth(150)
@@ -264,7 +277,7 @@ class CollectionMenu(QtGui.QTreeView):
         self.current_category = None
         self.collection_root = collection_root
 
-        self.filemodel = QtGui.QFileSystemModel(self)
+        self.filemodel = QtWidgets.QFileSystemModel(self)
         self.filemodel.setIconProvider(CollectionIconProvider())
         
         self.filemodel.setFilter(QtCore.QDir.AllDirs|QtCore.QDir.NoDotAndDotDot)
@@ -283,12 +296,15 @@ class CollectionMenu(QtGui.QTreeView):
 
     def selectionChanged(self, selected, deselected):
         
-        items_path_root = self.filemodel.filePath(self.currentIndex())
-        self.current_category = items_path_root.replace(os.sep, '/').replace(self.collection_root.replace(os.sep, '/'), '')
-        self.collection.assets_grid.display_items(items_path_root)
+        try:
+            items_path_root = self.filemodel.filePath(self.currentIndex())
+            self.current_category = items_path_root.replace(os.sep, '/').replace(self.collection_root.replace(os.sep, '/'), '')
+            self.collection.assets_grid.display_items(items_path_root)
+        except AttributeError:
+            pass
         super(CollectionMenu, self).selectionChanged(selected, deselected)
         
-class CollectionItemProperties(QtGui.QWidget):
+class CollectionItemProperties(QtWidgets.QWidget):
 
     def __init__(self, collection_root, parent=None):
         super(CollectionItemProperties, self).__init__(parent=parent)
@@ -300,58 +316,58 @@ class CollectionItemProperties(QtGui.QWidget):
         self.metadata = None
         self.setProperty("houdiniStyle", True)
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         main_layout.setSpacing(5)
 
-        main_layout.addWidget(QtGui.QLabel("Properties:"))
+        main_layout.addWidget(QtWidgets.QLabel("Properties:"))
         main_layout.addWidget(h_widgets.HSeparator())
 
-        self.item_name_w = QtGui.QLabel("Name: -")
+        self.item_name_w = QtWidgets.QLabel("Name: -")
         main_layout.addWidget(self.item_name_w)
 
-        self.item_path_w = QtGui.QLabel("Path: -")
+        self.item_path_w = QtWidgets.QLabel("Path: -")
         main_layout.addWidget(self.item_path_w)
 
-        self.check_geo_btn = QtGui.QPushButton("Preview geo")
+        self.check_geo_btn = QtWidgets.QPushButton("Preview geo")
         self.check_geo_btn.setEnabled(False)
         main_layout.addWidget(self.check_geo_btn)
 
         main_layout.addWidget(h_widgets.HSeparator())
 
-        self.item_format = QtGui.QLabel("Format: - ")
+        self.item_format = QtWidgets.QLabel("Format: - ")
         main_layout.addWidget(self.item_format)
 
-        self.item_type = QtGui.QLabel("Type: - ")
+        self.item_type = QtWidgets.QLabel("Type: - ")
         main_layout.addWidget(self.item_type)
 
-        self.item_npoints = QtGui.QLabel("Points: - ")
+        self.item_npoints = QtWidgets.QLabel("Points: - ")
         main_layout.addWidget(self.item_npoints)
 
-        self.item_nprims = QtGui.QLabel("Prims: -")
+        self.item_nprims = QtWidgets.QLabel("Prims: -")
         main_layout.addWidget(self.item_nprims)
 
         main_layout.addWidget(h_widgets.HSeparator())
 
-        main_layout.addWidget(QtGui.QLabel("Infos:"))
-        self.item_infos = QtGui.QTextEdit()
+        main_layout.addWidget(QtWidgets.QLabel("Infos:"))
+        self.item_infos = QtWidgets.QTextEdit()
         self.item_infos.setReadOnly(True)
         main_layout.addWidget(self.item_infos)
 
-        self.tags_w = QtGui.QLabel("Tags: -")
+        self.tags_w = QtWidgets.QLabel("Tags: -")
         main_layout.addWidget(self.tags_w)
 
         self.edit_tags_btn = None
         self.import_3d_btn = None
         if not FROM_GAIA_SCATTER:
 
-            self.edit_tags_btn = QtGui.QPushButton("Edit Properties")
+            self.edit_tags_btn = QtWidgets.QPushButton("Edit Properties")
             self.edit_tags_btn.setEnabled(False)
             main_layout.addWidget(self.edit_tags_btn)
 
             main_layout.addWidget(h_widgets.HSeparator())
 
-            self.import_3d_btn = QtGui.QPushButton("Import Asset To Scene")
+            self.import_3d_btn = QtWidgets.QPushButton("Import Asset To Scene")
             self.import_3d_btn.setFixedHeight(36)
             self.import_3d_btn.setIcon(get_icon("3d_file_import"))
             self.import_3d_btn.setIconSize(QtCore.QSize(32, 32))
@@ -440,13 +456,14 @@ class CollectionItemProperties(QtGui.QWidget):
         f.setName("import_" + self.metadata["name"])
         f.parm("file").set(self.item_path)
 
-class CollectionItem(QtGui.QLabel):
+class CollectionItem(QtWidgets.QLabel):
 
     def __init__(self, metadata=None, collection_root="", parent=None):
         super(CollectionItem, self).__init__(parent=parent)
 
         global FROM_GAIA_SCATTER
         self.from_gaia_scatter = FROM_GAIA_SCATTER
+        self.setProperty("houdiniStyle", True)
 
         self.is_selected = False
         self.metadata = metadata
@@ -494,7 +511,7 @@ class CollectionItem(QtGui.QLabel):
         
         super(CollectionItem, self).mousePressEvent(event)
 
-class CreateNewEntryWidget(QtGui.QFrame):
+class CreateNewEntryWidget(QtWidgets.QFrame):
 
     def __init__(self, selected_node=None, create_light=True, assets_grid=None,
                  current_category=None,
@@ -505,7 +522,8 @@ class CreateNewEntryWidget(QtGui.QFrame):
         self.setWindowTitle("Create new asset")
         self.setWindowIcon(get_icon("populate_database"))
         self.setAutoFillBackground(True)
-        
+        self.setProperty("houdiniStyle", True)
+
         self.assets_grid = assets_grid
         self.current_category = current_category
 
@@ -518,7 +536,7 @@ class CreateNewEntryWidget(QtGui.QFrame):
         self.obj_geo = None
         self.get_object_infos()
 
-        main_layout = QtGui.QVBoxLayout()
+        main_layout = QtWidgets.QVBoxLayout()
 
         # create light node if needed
         self.light_node = None
@@ -551,14 +569,14 @@ class CreateNewEntryWidget(QtGui.QFrame):
                      " flag ( +a ) aspect ( 1.0 )"))
 
         # thumbnail layout
-        thumbnail_lay = QtGui.QHBoxLayout()
+        thumbnail_lay = QtWidgets.QHBoxLayout()
         thumbnail_lay.setSpacing(5)
 
-        snap_lay = QtGui.QVBoxLayout()
+        snap_lay = QtWidgets.QVBoxLayout()
         snap_lay.setAlignment(QtCore.Qt.AlignTop)
         snap_lay.setSpacing(5)
 
-        self.thumbnail = QtGui.QLabel("")
+        self.thumbnail = QtWidgets.QLabel("")
         self.thumbnail.setFixedWidth(150)
         self.thumbnail.setFixedHeight(150)
         self.thumbnail.setStyleSheet("""QLabel{border: 1px solid black}""")
@@ -568,27 +586,27 @@ class CreateNewEntryWidget(QtGui.QFrame):
 
         # basic geo infos
         snap_lay.addWidget(h_widgets.HSeparator())
-        snap_lay.addWidget(QtGui.QLabel("Points: {}".format(self.npoints)))
-        snap_lay.addWidget(QtGui.QLabel("Prims: {}".format(self.nprims)))
+        snap_lay.addWidget(QtWidgets.QLabel("Points: {}".format(self.npoints)))
+        snap_lay.addWidget(QtWidgets.QLabel("Prims: {}".format(self.nprims)))
         binfos = "Bounds:\t {0:.2f} ".format(self.bounds[1])
         binfos += "{0:.2f} ".format(self.bounds[3])
         binfos += "{0:.2f} ".format(self.bounds[5])
-        snap_lay.addWidget(QtGui.QLabel(binfos))
+        snap_lay.addWidget(QtWidgets.QLabel(binfos))
         binfos = "\t {0:.2f} ".format(self.bounds[0])
         binfos += "{0:.2f} ".format(self.bounds[2])
         binfos += "{0:.2f}".format(self.bounds[4])
-        snap_lay.addWidget(QtGui.QLabel(binfos))
+        snap_lay.addWidget(QtWidgets.QLabel(binfos))
 
         center = "Center: {0:.2f} ".format(self.obj_center[0])
         center += "{0:.2f} ".format(self.obj_center[1])
         center += "{0:.2f}".format(self.obj_center[2])
-        snap_lay.addWidget(QtGui.QLabel(center))
+        snap_lay.addWidget(QtWidgets.QLabel(center))
 
         thumbnail_lay.addItem(snap_lay)
 
         thumbnail_lay.addWidget(h_widgets.HSeparator(mode="vertical"))
 
-        thumbnail_opts_lay = QtGui.QVBoxLayout()
+        thumbnail_opts_lay = QtWidgets.QVBoxLayout()
         thumbnail_opts_lay.setSpacing(5)
         thumbnail_opts_lay.setAlignment(QtCore.Qt.AlignTop)
 
@@ -598,7 +616,7 @@ class CreateNewEntryWidget(QtGui.QFrame):
                                                   hou_parm=self.light_node.parm("ry"))
             thumbnail_opts_lay.addWidget(self.light_orient)
 
-        self.capture_btn = QtGui.QPushButton("Update Snapshot")
+        self.capture_btn = QtWidgets.QPushButton("Update Snapshot")
         self.capture_btn.setIcon(get_icon("terrain"))
         self.capture_btn.clicked.connect(self.create_thumbnail)
         thumbnail_opts_lay.addWidget(self.capture_btn)
@@ -613,33 +631,33 @@ class CreateNewEntryWidget(QtGui.QFrame):
                                          "tags:")
         thumbnail_opts_lay.addWidget(self.tags)
         
-        self.category = QtGui.QLabel("Category: " + self.current_category)
+        self.category = QtWidgets.QLabel("Category: " + self.current_category)
         thumbnail_opts_lay.addWidget(self.category)
 
-        format_lay = QtGui.QHBoxLayout()
+        format_lay = QtWidgets.QHBoxLayout()
         format_lay.setSpacing(5)
         format_lay.setAlignment(QtCore.Qt.AlignLeft)
-        format_lay.addWidget(QtGui.QLabel("Format:"))
+        format_lay.addWidget(QtWidgets.QLabel("Format:"))
         
-        self.format = QtGui.QComboBox()
+        self.format = QtWidgets.QComboBox()
         self.format.addItems(["bgeo.gz", "obj", "abc", "hda"])
         format_lay.addWidget(self.format)
 
         thumbnail_opts_lay.addLayout(format_lay)
 
-        type_lay = QtGui.QHBoxLayout()
+        type_lay = QtWidgets.QHBoxLayout()
         type_lay.setSpacing(5)
         type_lay.setAlignment(QtCore.Qt.AlignLeft)
-        type_lay.addWidget(QtGui.QLabel("Type:"))
+        type_lay.addWidget(QtWidgets.QLabel("Type:"))
         
-        self.obj_type = QtGui.QComboBox()
+        self.obj_type = QtWidgets.QComboBox()
         self.obj_type.addItems(["static", "dynamic", "animated"])
         type_lay.addWidget(self.obj_type)
 
         thumbnail_opts_lay.addLayout(type_lay)
 
-        thumbnail_opts_lay.addWidget(QtGui.QLabel("Infos:"))
-        self.info_text = QtGui.QTextEdit()
+        thumbnail_opts_lay.addWidget(QtWidgets.QLabel("Infos:"))
+        self.info_text = QtWidgets.QTextEdit()
         self.info_text.setMaximumHeight(75)
         thumbnail_opts_lay.addWidget(self.info_text)
 
@@ -647,15 +665,15 @@ class CreateNewEntryWidget(QtGui.QFrame):
         main_layout.addItem(thumbnail_lay)
 
         # footer
-        buttons_layout = QtGui.QHBoxLayout()
+        buttons_layout = QtWidgets.QHBoxLayout()
         buttons_layout.setSpacing(5)
 
-        self.validate_btn = QtGui.QPushButton("Create Asset")
+        self.validate_btn = QtWidgets.QPushButton("Create Asset")
         self.validate_btn.clicked.connect(self.create_asset)
         self.validate_btn.setIcon(get_icon("checkmark"))
         buttons_layout.addWidget(self.validate_btn)
 
-        self.cancel_btn = QtGui.QPushButton("Cancel")
+        self.cancel_btn = QtWidgets.QPushButton("Cancel")
         self.cancel_btn.clicked.connect(self.close)
         self.cancel_btn.setIcon(get_icon("close"))
         buttons_layout.addWidget(self.cancel_btn)
