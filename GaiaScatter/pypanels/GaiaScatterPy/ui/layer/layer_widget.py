@@ -900,6 +900,9 @@ class LayerExcludeWidget(QtWidgets.QWidget):
             if not self.LAYERS.node(layer): continue
 
             w = _LayerExcludeElement(layer, parent=self)
+            p = self.exclude_layer_node.node("import_layer_" + layer).parm("radius")
+            w.radius_w.hou_parm = p
+            w.radius_w.set_value(p.eval())
             self.scroll_layout.addWidget(w)
             self.widgets.append(w)
             self.layer_widgets.append(w)
@@ -1038,6 +1041,11 @@ class _LayerExcludeElement(QtWidgets.QWidget):
 
         main_layout.setContentsMargins(1,1,1,1)
         self.setLayout(main_layout)
+
+    def update_hou_parm(self, layer):
+
+        hou_parm = self.top_w.exclude_layer_node.node("import_layer_" + layer).parm("radius")
+        self.radius_w.hou_parm = hou_parm
 
     def delete(self, show_ui=True):
 
