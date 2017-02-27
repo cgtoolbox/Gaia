@@ -28,13 +28,20 @@
     <Compile Include="h_widgets.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="icons\icon.py" />
     <Compile Include="nodeInfos.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="icons\" />
+    <Folder Include="icons\24\" />
+    <Folder Include="icons\32\" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="{a7e3a1eb-5ab6-4f1e-8fe1-b73cebc0fced}\2.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="icons\24\convert_to_solid.png" />
+    <Content Include="icons\32\convert_to_solid.png" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
