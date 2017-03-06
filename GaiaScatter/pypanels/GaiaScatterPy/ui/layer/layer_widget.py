@@ -1088,10 +1088,14 @@ class _LayerExcludeElement(QtWidgets.QWidget):
             self.visible = True
 
     def refresh_layer_imports(self, value):
-        
+
         layer_names = self.top_w.exclude_layer_node.evalParm("layer_list").split(' ')
         layer_names = list(set(layer_names))
         self.top_w.refresh_layer_imports(layer_names)
+
+        #TODO: clean
+        v = value.split(' ')[-1].replace(' ', '')
+        self.update_hou_parm(v)
 
 class InstancesListWidget(QtWidgets.QWidget):
 
