@@ -292,6 +292,16 @@ class _BaseStroke(QtWidgets.QWidget):
         lbl.setStyleSheet("QLabel{background:transparent;}")
         main_layout.addWidget(lbl)
         
+        if self.type == "painter":
+            self.edit_stroke_btn = QtWidgets.QPushButton("")
+            self.edit_stroke_btn.setIcon(get_icon("merge_points"))
+            self.edit_stroke_btn.setToolTip("Edit current stroke's points")
+            self.edit_stroke_btn.setIconSize(QtCore.QSize(18, 18))
+            self.edit_stroke_btn.setFixedWidth(22)
+            self.edit_stroke_btn.setFixedHeight(22)
+            self.edit_stroke_btn.clicked.connect(self.enter_edit_mode)
+            main_layout.addWidget(self.edit_stroke_btn)
+
         self.hide_stroke_btn = QtWidgets.QPushButton("")
         self.hide_stroke_btn.setIcon(get_icon("eye_open"))
         self.hide_stroke_btn.setToolTip("Hide / Show strokes group")
@@ -319,6 +329,11 @@ class _BaseStroke(QtWidgets.QWidget):
         self.type = "painter"
         self.bg_color = QtGui.QColor(20, 125, 20, 128)
 
+    def enter_edit_mode(self):
+
+        edit_node = self.stroke_grp_node.node("MANUAL_EDITS").node("EDIT_NODES").node("IN")
+        edit_node.setSelected(True, True)
+
     def switch_enable(self):
 
         if self.enabled:
@@ -326,6 +341,7 @@ class _BaseStroke(QtWidgets.QWidget):
             self.enabled = False
             self.stroke_grp_node.parm("enable").set(0)
             self.lbl_ico.setEnabled(False)
+            self.edit_stroke_btn.setEnabled(False)
             p = self.palette()
             p.setColor(self.backgroundRole(), QtGui.QColor(80, 80, 80, 128))
             self.setPalette(p)
@@ -334,6 +350,7 @@ class _BaseStroke(QtWidgets.QWidget):
             self.enabled = True
             self.stroke_grp_node.parm("enable").set(1)
             self.lbl_ico.setEnabled(True)
+            self.edit_stroke_btn.setEnabled(True)
             p = self.palette()
             p.setColor(self.backgroundRole(), self.bg_color)
             self.setPalette(p)
