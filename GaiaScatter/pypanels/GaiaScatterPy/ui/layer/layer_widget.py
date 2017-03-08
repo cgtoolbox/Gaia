@@ -845,7 +845,8 @@ class LayerExcludeWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
 
-        self.enable_exclude = widgets.HLabeledCheckbox("Layers Exclusion", True)
+        d = self.exclude_layer_node.parm("enable").eval()
+        self.enable_exclude = widgets.HLabeledCheckbox("Layers Exclusion", d)
         self.enable_exclude.clicked.connect(self.enable_widget)
         main_layout.addWidget(self.enable_exclude)
 
@@ -908,7 +909,7 @@ class LayerExcludeWidget(QtWidgets.QWidget):
             self.layer_widgets.append(w)
 
         self.refresh_layer_imports(layers)
-
+        self.enable_widget()
 
     def refresh_layer_imports(self, layer_names):
         
