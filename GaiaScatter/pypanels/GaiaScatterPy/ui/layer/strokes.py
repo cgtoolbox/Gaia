@@ -341,19 +341,21 @@ class _BaseStroke(QtWidgets.QWidget):
             self.enabled = False
             self.stroke_grp_node.parm("enable").set(0)
             self.lbl_ico.setEnabled(False)
-            self.edit_stroke_btn.setEnabled(False)
             p = self.palette()
             p.setColor(self.backgroundRole(), QtGui.QColor(80, 80, 80, 128))
             self.setPalette(p)
+            if self.type == "painter":
+                self.edit_stroke_btn.setEnabled(False)
         else:
             self.hide_stroke_btn.setIcon(get_icon("eye_open"))
             self.enabled = True
             self.stroke_grp_node.parm("enable").set(1)
             self.lbl_ico.setEnabled(True)
-            self.edit_stroke_btn.setEnabled(True)
             p = self.palette()
             p.setColor(self.backgroundRole(), self.bg_color)
             self.setPalette(p)
+            if self.type == "painter":
+                self.edit_stroke_btn.setEnabled(True)
 
     def remove_node(self):
 

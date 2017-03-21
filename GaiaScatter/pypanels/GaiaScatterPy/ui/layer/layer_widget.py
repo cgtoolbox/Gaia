@@ -250,6 +250,13 @@ class LayerTabWidget(QtWidgets.QWidget):
         self.delete_lay_btn.clicked.connect(self.delete_layer)
         top_toolbar_layout.addWidget(self.delete_lay_btn)
 
+        self.refresh_scatter_btn = QtWidgets.QPushButton("")
+        self.refresh_scatter_btn.setIcon(get_icon("refresh"))
+        self.refresh_scatter_btn.setIconSize(QtCore.QSize(24,24))
+        self.refresh_scatter_btn.setToolTip("Refresh Gaia Scatter state")
+        self.refresh_scatter_btn.clicked.connect(self.refresh_gaia_scatter)
+        top_toolbar_layout.addWidget(self.refresh_scatter_btn)
+
         self.main_layout.addItem(top_toolbar_layout)
 
         # scroll layout part
@@ -305,6 +312,17 @@ class LayerTabWidget(QtWidgets.QWidget):
                                                           parent=self)
         self.scroll_layout.addWidget(self.strokes_groups_w)
     
+    def refresh_gaia_scatter(self):
+
+        gaia_top = hou.session.MAIN_GAIA_SCATTER_CACHE.get("CURRENT_GAIA_SCATTER")
+        if not gaia_top: return
+        gaia_top = hou.node(gaia_top)
+
+        data_node = gaia_top.node("PACKED_COPIES").node("DATA")
+        data_node.bypass(True)
+        data_node.bypass(False)
+        data_node.cook(force=True)
+
     def delete_layer(self):
 
         r = hou.ui.displayMessage("Delete the layer?",
@@ -657,6 +675,7 @@ class ScatterRulesWidget(QtWidgets.QWidget):
         main_layout.setSpacing(5)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
 
+        self.gaia_node = gaia_node
         self.input_geo = gaia_node.node.node("INPUT_GEO").geometry()
         self.scatter = gaia_node.node.node("RAW_POINTS")
         fill_node = gaia_node.node
@@ -697,6 +716,27 @@ class ScatterRulesWidget(QtWidgets.QWidget):
 
         # BASIC RULES
         main_layout.addWidget(QtWidgets.QLabel("Min/Max normalized values:"))
+
+        # Attributes remap
+        self.attr_remap_node = gaia_node.node.node("attr_remap_sub").node("attributes_remap")
+
+        attr_remap_layout = QtWidgets.QHBoxLayout()
+        attr_remap_layout.setSpacing(5)
+        attr_remap_layout.setAlignment(QtCore.Qt.AlignLeft)
+        attr_remap_check = widgets.HLabeledCheckbox("Attribute remap",
+                                                    default_state=self.attr_remap_node.evalParm("enable"))
+        attr_remap_check.clicked.connect(lambda: self.attr_remap_node.parm("enable").set(attr_remap_check.isChecked()))
+        attr_remap_layout.addWidget(attr_remap_check)
+
+        self.switch_attr_remap_btn = QtWidgets.QPushButton("")
+        self.switch_attr_remap_btn.setCheckable(True)
+        self.switch_attr_remap_btn.setChecked(False)
+        self.switch_attr_remap_btn.setIcon(get_icon("wave_amplify_amplitude"))
+        self.switch_attr_remap_btn.setToolTip("Go to remap attribute node")
+        self.switch_attr_remap_btn.clicked.connect(self.swtich_attrib_remap)
+        attr_remap_layout.addWidget(self.switch_attr_remap_btn)
+
+        main_layout.addItem(attr_remap_layout)
 
         # ALTITUDE RULE
         alti_layout = QtWidgets.QHBoxLayout()
@@ -823,6 +863,20 @@ class ScatterRulesWidget(QtWidgets.QWidget):
 
         return [a.name() for a in self.input_geo.pointAttribs()\
                 if a.name() not in ["P", "Pw", "Cd"]]
+
+    def swtich_attrib_remap(self):
+
+        if self.switch_attr_remap_btn.isChecked():
+            self.attr_remap_node.setCurrent(True, True)
+            self.attr_remap_node.setDisplayFlag(True)
+            self.attr_remap_node.setRenderFlag(True)
+            self.attr_remap_node.setSelected(True)
+
+        else:
+            self.gaia_node.node.node("OUT").setDisplayFlag(True)
+            self.gaia_node.node.node("OUT").setRenderFlag(True)
+            self.gaia_node.node.parent().parent().setCurrent(True, True)
+            self.gaia_node.node.parent().parent().setSelected(True)
 
 class LayerExcludeWidget(QtWidgets.QWidget):
     """ Exclude given layer(s) from current layer according to a radius
