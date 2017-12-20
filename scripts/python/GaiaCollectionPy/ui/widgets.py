@@ -39,7 +39,7 @@ class CollectionWidget(QtWidgets.QFrame):
         global FROM_GAIA_SCATTER
         FROM_GAIA_SCATTER = from_gaia_scatter
 
-        self.collection_root = r"D:\WORK_3D\Gaia\GaiaCollection\collections"
+        self.collection_root = r"D:\__dev__\HoudiniPythonTools\Gaia\Model_Collections"
         hou.session.GAIA_COLLECTION_ROOT = self.collection_root
         
         self.categories = []

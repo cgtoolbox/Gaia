@@ -5,13 +5,16 @@
  used by the application.  Note, that two definitions of the
  same interface or of the interfaces menu are not allowed
  in a single file. -->
-  <interface name="Gaia_Scatter" label="Gaia Scatter" icon="MISC_python" help_url="">
-    <script><![CDATA[from PySide import QtGui
+  <interface name="Gaia_Collection" label="Gaia Collection" icon="MISC_python" help_url="">
+    <script><![CDATA[import GaiaCollectionPy.ui.widgets as widgets
+reload(widgets)
 
 def createInterface():
-    widget = QtGui.QLabel('Hello World!')
+    widget = widgets.CollectionWidget(parent=None)
     return widget
 ]]></script>
+    <includeInPaneTabMenu menu_position="0" create_separator="false"/>
+    <includeInToolbarMenu menu_position="0" create_separator="false"/>
     <help><![CDATA[]]></help>
   </interface>
 </pythonPanelDocument>
